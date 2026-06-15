@@ -21,6 +21,13 @@ When asked to write or generate executable specifications from story acceptance 
 - The test calls the DSL. The DSL calls the driver. The driver translates instructions into the protocol required to connect to the SUT.
 - Use the DSL to control the external system stubs the SUT depends on as part of each component test.
 
+## E2E module location and tooling
+
+- All executable specifications that drive the running application live in the top-level **`e2e/`** module — at the same level as `frontend/` and `backend/`, not inside either.
+- **Playwright** (`@playwright/test`) is the browser automation tool for UI-layer specs.
+- **Jest** is the test runner for non-browser tests within `e2e/` (DSL unit tests, driver contract tests).
+- See `.claude/prompt-snippets/e2e-conventions.md` for the full four-layer architecture (Spec → DSL → Driver → Playwright), file paths, and Windows run commands.
+
 ## Skipping and incremental delivery
 
 - Find ways to skip tests until they are implemented, but allow them to be executed individually as needed during development.

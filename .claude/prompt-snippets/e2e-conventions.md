@@ -2,21 +2,42 @@
 
 End-to-end tests for FaceFile drive the **real Angular SPA against a real backend** through a browser. They are the only layer that can exercise routing, the auth interceptor, server-rendered errors, and uploaded photo serving end to end.
 
+## Module location
+
+E2E tests live in a **top-level `e2e/` module** at the same level as `frontend/` and `backend/`:
+
+```
+facefile/
+├── backend/
+├── frontend/
+├── e2e/           ← all e2e code lives here
+│   ├── package.json
+│   ├── playwright.config.ts
+│   ├── jest.config.ts
+│   ├── specs/         (*.e2e.spec.ts files)
+│   ├── facefile/      (DSL + driver)
+│   ├── fixtures/
+│   └── support/
+└── ...
+```
+
+Unit tests stay in `frontend/src/**/*.spec.ts` (Karma/Jasmine). Never mix unit tests and e2e tests in the same module.
+
 ## Tooling
 
-- **Playwright** is the only supported e2e runner (`@playwright/test`). Do not introduce Cypress, WebdriverIO, Selenium, or Protractor.
-- E2E tests live in `frontend/tests/e2e/`. Unit tests stay in `frontend/src/**/*.spec.ts` (Karma/Jasmine) — never mix the two.
-- A separate Playwright config (`frontend/playwright.e2e.config.ts`) governs e2e runs so it can be tuned independently of any future smoke suite.
+- **Playwright** (`@playwright/test`) handles browser automation. Do not introduce Cypress, WebdriverIO, Selenium, or Protractor.
+- **Jest** is the test runner for non-browser tests within the `e2e/` module (e.g. DSL unit tests, driver contract tests). Use `@playwright/test` for browser-driven specs.
+- The Playwright config (`e2e/playwright.config.ts`) governs e2e runs so it can be tuned independently of any future smoke suite.
 
-## NPM scripts (run from `frontend/`)
+## NPM scripts (run from `e2e/`)
 
 ```jsonc
 {
-  "test": "ng test",                                    // unit tests (Karma)
-  "test:e2e":        "playwright test --config=playwright.e2e.config.ts",
-  "test:e2e:headed": "playwright test --config=playwright.e2e.config.ts --headed",
-  "test:e2e:ui":     "playwright test --config=playwright.e2e.config.ts --ui",
-  "test:e2e:report": "playwright show-report"
+  "test:e2e":        "playwright test --config=playwright.config.ts",
+  "test:e2e:headed": "playwright test --config=playwright.config.ts --headed",
+  "test:e2e:ui":     "playwright test --config=playwright.config.ts --ui",
+  "test:e2e:report": "playwright show-report",
+  "test:unit":       "jest"
 }
 ```
 
@@ -26,26 +47,26 @@ On Windows, `npx` and `npm run` spawn child processes in a **separate console wi
 
 ```powershell
 # All e2e tests
-cd frontend
-cmd /c "node_modules\.bin\playwright.cmd test --config=playwright.e2e.config.ts --reporter=list > C:\Temp\test-out.txt 2>&1"
+cd e2e
+cmd /c "node_modules\.bin\playwright.cmd test --config=playwright.config.ts --reporter=list > C:\Temp\test-out.txt 2>&1"
 Get-Content C:\Temp\test-out.txt
 
 # Single spec
-cmd /c "node_modules\.bin\playwright.cmd test --config=playwright.e2e.config.ts --reporter=list tests/e2e/palaces/create-custom-palace.e2e.spec.ts > C:\Temp\test-out.txt 2>&1"
+cmd /c "node_modules\.bin\playwright.cmd test --config=playwright.config.ts --reporter=list specs/palaces/create-custom-palace.e2e.spec.ts > C:\Temp\test-out.txt 2>&1"
 Get-Content C:\Temp\test-out.txt
 
 # With grep filter
-cmd /c "node_modules\.bin\playwright.cmd test --config=playwright.e2e.config.ts --grep ""S-2.1.1"" --reporter=list > C:\Temp\test-out.txt 2>&1"
+cmd /c "node_modules\.bin\playwright.cmd test --config=playwright.config.ts --grep ""S-2.1.1"" --reporter=list > C:\Temp\test-out.txt 2>&1"
 Get-Content C:\Temp\test-out.txt
 
-# Unit tests
-cmd /c "npm run test:unit > C:\Temp\test-out.txt 2>&1"
+# Jest unit tests (DSL/driver contract tests)
+cmd /c "node_modules\.bin\jest.cmd > C:\Temp\test-out.txt 2>&1"
 Get-Content C:\Temp\test-out.txt
 ```
 
 Rules:
 - **Always use `node_modules\.bin\playwright.cmd`** directly — not `npm run test:e2e` or bare `npx playwright`. npm spawns a PowerShell child that re-spawns playwright in a new window, swallowing the redirect. The redirect must be **inside** the `cmd /c` string.
-- **Always pass `--config=playwright.e2e.config.ts`** so `baseURL` is set; without it, all `page.goto('/...')` calls fail with "Cannot navigate to invalid URL".
+- **Always pass `--config=playwright.config.ts`** so `baseURL` is set; without it, all `page.goto('/...')` calls fail with "Cannot navigate to invalid URL".
 - Exit code from `cmd /c` is reliable: 0 = all passed, non-zero = failures.
 - Pass `--reporter=line` or `--reporter=list` for readable streaming output.
 
@@ -71,7 +92,7 @@ while ((Get-Date) -lt $end) {
 }
 
 # Start frontend (ng serve spawns a separate window — just poll the port)
-Start-Process cmd -ArgumentList "/c", "cd /d C:\Users\bcfis\work\facefile\frontend && npx ng serve --port 4200" -WindowStyle Minimized
+Start-Process cmd -ArgumentList "/c", "cd /d C:\Users\bcfis\work\facefile\frontend && npx @angular/cli@21 serve --port 4200" -WindowStyle Minimized
 $end = (Get-Date).AddSeconds(120)
 while ((Get-Date) -lt $end) {
   if ((Invoke-WebRequest -Uri "http://localhost:4200" -UseBasicParsing -EA SilentlyContinue).StatusCode -eq 200) { "Frontend ready"; break }
@@ -93,10 +114,10 @@ Keep e2e code split into four layers, each with one job. Mixing them — calling
 ```
 spec —uses—> DSL (FacefileDsl, FacefileDslAssert) —uses—> Driver (FacefileBrowserDriver) —uses—> Playwright (page, request, expect)
                     ↑
-              Fixtures (tests/e2e/fixtures) wire it all together
+              Fixtures (e2e/fixtures/) wire it all together
 ```
 
-### Layer 1 — Spec files (`tests/e2e/**/*.e2e.spec.ts`)
+### Layer 1 — Spec files (`e2e/specs/**/*.e2e.spec.ts`)
 
 - Express **business scenarios** in Given/When/Then form, mirroring the `## Scenarios` block in the corresponding story under `docs/capabilities/**/stories/`.
 - OK: `await facefile.signUp('email: alice@example.com')`, `await facefile.addContact('name: Brian')`, `await confirmThat(facefile).quizDueCount('count: 1')`.
@@ -105,7 +126,7 @@ spec —uses—> DSL (FacefileDsl, FacefileDslAssert) —uses—> Driver (Facefi
 - **Not OK**: bare `expect(...)` on raw values. Always go through `confirmThat(facefile).<assertion>(...)`.
 - One spec file per story (or per epic when stories share scenes). Name it after the story slug.
 
-### Layer 2 — DSL (`tests/e2e/facefile/facefile.dsl.ts`, `facefile.dsl-assert.ts`)
+### Layer 2 — DSL (`e2e/facefile/facefile.dsl.ts`, `e2e/facefile/facefile.dsl-assert.ts`)
 
 - A **domain vocabulary** for FaceFile concepts: contacts, quiz cards, SM-2 ratings, tutorial steps, palaces. Methods read like English (`signUp`, `addContact`, `startQuiz`, `rateCurrentCard`, `walkThroughTutorial`).
 - The DSL is the **only** layer specs talk to.
@@ -115,7 +136,7 @@ spec —uses—> DSL (FacefileDsl, FacefileDslAssert) —uses—> Driver (Facefi
 - **Not OK**: importing `playwright`, `@playwright/test`, `fs`, `path`, `child_process`, or referencing selectors, cookies, `localStorage`, or timeouts.
 - When adding a new scenario verb, add it to the DSL first (a `console.log` stub is fine), then back it with a driver method.
 
-### Layer 3 — Driver (`tests/e2e/facefile/facefile.browser.driver.ts`)
+### Layer 3 — Driver (`e2e/facefile/facefile.browser.driver.ts`)
 
 - The **only** place that knows about Playwright (`Page`, `Locator`, `APIRequestContext`), CSS/role selectors, the auth-interceptor's token-refresh dance, file-upload paths, and DB cleanup via the API or Prisma.
 - Owns: navigating to routes, locating elements by accessible role/name (prefer `getByRole`/`getByLabel` over CSS), filling forms, uploading photos, reading network responses, and seeding/cleaning data through the backend API.
@@ -124,7 +145,7 @@ spec —uses—> DSL (FacefileDsl, FacefileDslAssert) —uses—> Driver (Facefi
 - **Not OK**: throwing bare strings; use a `requirePage()` / `requireSignedInUser()` pattern so misuse fails with a clear message.
 - Cleanup is mandatory and must remain idempotent — every test artifact (DB row, uploaded file, signed-in session) must be released in fixture teardown. **Deactivate** user accounts rather than deleting them. Never touch the account named `"Brent Fisher"`.
 
-### Layer 4 — Fixtures (`tests/e2e/fixtures/`)
+### Layer 4 — Fixtures (`e2e/fixtures/`)
 
 - Wire the layers together for Playwright. `facefile.ts` extends `@playwright/test` with test-scoped fixtures: `driver` (constructs the driver, calls cleanup after each test, `auto: true`), `facefile` (wraps the driver in `FacefileDsl`).
 - Specs import `test` and any skip helpers from `./fixtures` — **never** from `@playwright/test` directly — so the layering and any availability skips stay consistent.
@@ -140,7 +161,7 @@ When multiple test runs execute against the same database (sequential runs, para
 
 ### How it works
 
-`DslContext` (in `tests/e2e/support/dsl-context.ts`) holds a SHA-256 hash derived from a per-test seed (default: `Date.now()`). Its `alias(value)` method builds a stable alias for any plain value:
+`DslContext` (in `e2e/support/dsl-context.ts`) holds a SHA-256 hash derived from a per-test seed (default: `Date.now()`). Its `alias(value)` method builds a stable alias for any plain value:
 
 ```
 alias("Tom")   →  "Tom1a3f2"    (within a test run seeded at 1693847201234)
@@ -159,7 +180,7 @@ The algorithm:
 ### Wiring (fixture creates one context per test)
 
 ```ts
-// fixtures/facefile.ts
+// e2e/fixtures/facefile.ts
 facefile: async ({ driver }, use) => {
   const ctx = new DslContext();          // unique seed per test
   await use(new FacefileDsl(driver, ctx));
@@ -171,14 +192,14 @@ facefile: async ({ driver }, use) => {
 Call `ctx.alias()` in the DSL when the value will be written to the system **and** later searched for in assertions. The spec always writes the plain name; isolation is invisible above the DSL.
 
 ```ts
-// facefile.dsl.ts — action verb
+// e2e/facefile/facefile.dsl.ts — action verb
 async addsContact(nameParam: string): Promise<void> {
   const name = this.ctx.alias(parseParam(nameParam, 'name')); // "Tom" → "Tom1a3f2"
   await this.driver.fillInputByLabel(/Name/i, name);
   await this.driver.clickButtonByName(/Save/i);
 }
 
-// facefile.dsl-assert.ts — assertion verb
+// e2e/facefile/facefile.dsl-assert.ts — assertion verb
 async showsContactInList(nameParam: string): Promise<void> {
   const name = this.dsl.ctx.alias(parseParam(nameParam, 'name')); // same "Tom" → same "Tom1a3f2"
   await this.dsl.driver.waitForRowContaining(new RegExp(name));
@@ -236,6 +257,7 @@ const message = this.ctx.interpolate(parseParam(messageParam, 'message'));
 ## Definition of done for an e2e change
 
 - `npm run lint`, `npm test`, and `npm run build` (frontend) pass.
-- `npm run test:e2e` passes locally with both backend and frontend running.
+- `npm run test:e2e` (from `e2e/`) passes locally with both backend and frontend running.
+- `npm run test:unit` (from `e2e/`) passes for any Jest tests added or modified.
 - Any new DSL verb has a matching driver method and at least one spec exercising it.
 - No spec imports Playwright directly. No driver method names mention domain concepts. No DSL method touches selectors or the network.
