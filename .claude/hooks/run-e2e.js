@@ -1,5 +1,6 @@
 const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
+const http = require('http');
 const path = require('path');
 
 const projectRoot = 'C:\\Users\\bcfis\\work\\facefile';
@@ -24,27 +25,48 @@ function changedFeatureFiles() {
   return lines.some(f => f && /^(frontend|backend)\//.test(f));
 }
 
-if (!changedFeatureFiles()) {
-  process.exit(0);
+function isPortUp(port) {
+  return new Promise((resolve) => {
+    const req = http.get({ hostname: 'localhost', port, path: '/', timeout: 2000 }, () => resolve(true));
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => { req.destroy(); resolve(false); });
+  });
 }
 
-if (!fs.existsSync('C:\\Temp')) fs.mkdirSync('C:\\Temp', { recursive: true });
+function rewake(additionalContext) {
+  process.stdout.write(JSON.stringify({
+    hookSpecificOutput: { hookEventName: 'Stop', additionalContext },
+  }));
+  process.exit(2);
+}
 
-spawnSync(
-  'cmd',
-  ['/c', `node_modules\\.bin\\playwright.cmd test --config=playwright.config.ts --reporter=list > "${outFile}" 2>&1`],
-  { cwd: e2eDir },
-);
+async function main() {
+  if (!changedFeatureFiles()) return;
 
-const output = fs.existsSync(outFile)
-  ? fs.readFileSync(outFile, 'utf8').trim()
-  : '(no output)';
+  const [backendUp, frontendUp] = await Promise.all([isPortUp(3001), isPortUp(4200)]);
 
-process.stdout.write(JSON.stringify({
-  hookSpecificOutput: {
-    hookEventName: 'Stop',
-    additionalContext: `E2E results after your changes:\n${output}`,
-  },
-}));
+  if (!backendUp || !frontendUp) {
+    const missing = [
+      !backendUp && 'backend :3001',
+      !frontendUp && 'frontend :4200',
+    ].filter(Boolean).join(' and ');
+    rewake(`E2E tests skipped — ${missing} not running. Start the server(s) if you want test coverage.`);
+    return;
+  }
 
-process.exit(2);
+  if (!fs.existsSync('C:\\Temp')) fs.mkdirSync('C:\\Temp', { recursive: true });
+
+  spawnSync(
+    'cmd',
+    ['/c', `node_modules\\.bin\\playwright.cmd test --config=playwright.config.ts --reporter=list > "${outFile}" 2>&1`],
+    { cwd: e2eDir },
+  );
+
+  const output = fs.existsSync(outFile)
+    ? fs.readFileSync(outFile, 'utf8').trim()
+    : '(no output)';
+
+  rewake(`E2E results after your changes:\n${output}`);
+}
+
+main();
