@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  Int                      @id @default(autoincrement())
+  email               String                   @unique
+  passwordHash        String
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  contacts            Contact[]
+  microsoftConnection UserMicrosoftConnection?
+  tutorialProgress    TutorialProgress?
+}
+
+model Contact {
+  id          Int          @id @default(autoincrement())
+  userId      Int
+  user        User         @relation(fields: [userId], references: [id])
+  name        String
+  photoPath   String?
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  reviewCard  ReviewCard?
+  quizResults QuizResult[]
+}
+
+model ReviewCard {
+  id           Int      @id @default(autoincrement())
+  contactId    Int      @unique
+  contact      Contact  @relation(fields: [contactId], references: [id])
+  easeFactor   Float    @default(2.5)
+  interval     Int      @default(0)
+  repetitions  Int      @default(0)
+  nextReviewAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model QuizResult {
+  id        Int      @id @default(autoincrement())
+  contactId Int
+  contact   Contact  @relation(fields: [contactId], references: [id])
+  mode      String
+  quality   Int
+  createdAt DateTime @default(now())
+}
+
+model UserMicrosoftConnection {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique
+  user         User     @relation(fields: [userId], references: [id])
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model TutorialProgress {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id])
+  currentStep Int      @default(1)
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
