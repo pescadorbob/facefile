@@ -16,9 +16,13 @@ Remember every face, every name — using science‑backed spaced repetition.
 |-------|------|
 | Frontend | Angular 19 · standalone components · signals · Tailwind CSS v3 |
 | Backend | Node.js + Express |
-| Database | SQLite via Prisma ORM |
+| Database | DynamoDB |
 | Scheduling | node-cron hourly check |
 | Spaced Repetition | SM‑2 algorithm |
+| Deployment | AWS Lambda - dynamoDB - AWS API Gateway - Route53 - ALB - CloudFormation  | 
+| Local Deployment | Node server - local dynamoDB | 
 
-## Project Structure
+Note: The application can be run locally, or it can be run in AWS. The code has layer separation so that the AWS Lambda code is completely separate as plumbing from the endpoints exposed.
+
+
 
