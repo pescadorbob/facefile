@@ -1,4 +1,4 @@
-# User Accepts, Modifies, or Rejects Suggestion
+﻿# User Accepts, Modifies, or Rejects Suggestion
 
 **As a** user who has received an AI-suggested name image, **I can** accept it as-is, edit it before saving, or dismiss it entirely, **so that** I stay in control of my own encoding.
 

@@ -1,4 +1,4 @@
-# Hardest Contacts List Updates After Sessions
+﻿# Hardest Contacts List Updates After Sessions
 
 **As a** user, **I can** see the hardest contacts list reflect the results of my most recent quiz session, **so that** it always shows current trouble spots rather than stale rankings.
 

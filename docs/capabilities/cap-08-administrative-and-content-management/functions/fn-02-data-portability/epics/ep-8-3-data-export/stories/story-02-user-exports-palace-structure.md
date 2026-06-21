@@ -1,4 +1,4 @@
-# User Exports Palace Structure
+﻿# User Exports Palace Structure
 
 **As a** user, **I can** export my palace definitions and locus assignments along with my contact data, **so that** the spatial organization I've built is preserved outside the app.
 

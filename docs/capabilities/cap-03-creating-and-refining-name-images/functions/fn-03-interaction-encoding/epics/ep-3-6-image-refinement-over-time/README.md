@@ -1,4 +1,4 @@
-# ep-3-6: Image Refinement Over Time
+﻿# ep-3-6: Image Refinement Over Time
 
 Allow users to update or flag their name image after a failed quiz so weak encodings can be strengthened before the next review.
 

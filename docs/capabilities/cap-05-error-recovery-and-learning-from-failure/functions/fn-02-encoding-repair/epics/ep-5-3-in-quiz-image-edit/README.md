@@ -1,4 +1,4 @@
-# ep-5-3: In-Quiz Image Edit
+﻿# ep-5-3: In-Quiz Image Edit
 
 Let users edit their name image or interaction description immediately within the quiz flow, right at the point of failure, so repairs happen while context is fresh.
 

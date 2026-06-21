@@ -1,4 +1,4 @@
-# F-9.3: Scheduled Jobs and Background Processing
+﻿# F-9.3: Scheduled Jobs and Background Processing
 
 Run time-sensitive tasks reliably without blocking user-facing requests.
 

@@ -1,4 +1,4 @@
-# C-2: Adding and Managing People
+﻿# C-2: Adding and Managing People
 
 > [Back to capability index](../README.md)
 

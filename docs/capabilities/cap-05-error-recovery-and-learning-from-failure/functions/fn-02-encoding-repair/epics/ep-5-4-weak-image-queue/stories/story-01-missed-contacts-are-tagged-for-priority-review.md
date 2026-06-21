@@ -1,4 +1,4 @@
-# Missed Contacts Are Tagged for Priority Review
+﻿# Missed Contacts Are Tagged for Priority Review
 
 **As a** user, **I can** have contacts I miss automatically tagged for higher-frequency review, **so that** they surface more often until the encoding stabilizes.
 

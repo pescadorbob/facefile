@@ -1,4 +1,4 @@
-# C-5: Error Recovery and Learning from Failure
+﻿# C-5: Error Recovery and Learning from Failure
 
 Forgetting is not failure — it's signal. This capability turns missed recalls into stronger memories by guiding users through reconstruction rather than passive re-exposure.
 

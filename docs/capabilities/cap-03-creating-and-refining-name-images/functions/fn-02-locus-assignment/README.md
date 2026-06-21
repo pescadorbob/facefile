@@ -1,4 +1,4 @@
-# F-3.2: Locus Assignment
+﻿# F-3.2: Locus Assignment
 
 Place the person in a specific, stable memory palace location so recall is spatially anchored.
 

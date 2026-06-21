@@ -1,4 +1,4 @@
-# User Sees Most Common Practice Time of Day
+﻿# User Sees Most Common Practice Time of Day
 
 **As a** user, **I can** see the time of day I most often practice, **so that** I can confirm whether my reminder timing is well-matched to when I actually use the app.
 

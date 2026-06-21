@@ -1,4 +1,4 @@
-# User Views All Contacts in a Palace
+﻿# User Views All Contacts in a Palace
 
 **As a** user, **I can** view all contacts placed within a specific palace, **so that** I can mentally walk through it before an event and rehearse the spatial sequence.
 

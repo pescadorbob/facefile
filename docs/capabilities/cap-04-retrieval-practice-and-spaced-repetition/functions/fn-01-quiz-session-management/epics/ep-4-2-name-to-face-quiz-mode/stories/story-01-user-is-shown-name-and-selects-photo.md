@@ -1,4 +1,4 @@
-# User Is Shown Name and Selects Photo
+﻿# User Is Shown Name and Selects Photo
 
 **As a** user in a quiz session, **I can** be shown a contact's name and select their photo from a set of options, **so that** I practice face recognition for people I've been told about.
 

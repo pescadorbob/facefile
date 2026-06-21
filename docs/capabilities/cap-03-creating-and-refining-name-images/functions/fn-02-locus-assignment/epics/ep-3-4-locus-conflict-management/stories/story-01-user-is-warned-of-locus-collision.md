@@ -1,4 +1,4 @@
-# User Is Warned of Locus Collision
+﻿# User Is Warned of Locus Collision
 
 **As a** user, **I can** receive a warning when I try to assign two contacts to the same locus in the same palace, **so that** spatial collisions don't create confusion during recall.
 

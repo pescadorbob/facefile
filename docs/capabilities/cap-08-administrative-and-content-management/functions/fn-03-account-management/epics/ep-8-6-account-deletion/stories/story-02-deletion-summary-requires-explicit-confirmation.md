@@ -1,4 +1,4 @@
-# Deletion Summary Requires Explicit Confirmation
+﻿# Deletion Summary Requires Explicit Confirmation
 
 **As a** user initiating account deletion, **I can** see a clear summary of exactly what will be deleted before I confirm, **so that** the action is fully intentional and not accidental.
 

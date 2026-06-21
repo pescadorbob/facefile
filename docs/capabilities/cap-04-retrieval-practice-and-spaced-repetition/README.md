@@ -1,4 +1,4 @@
-# C-4: Retrieval Practice and Spaced Repetition
+﻿# C-4: Retrieval Practice and Spaced Repetition
 
 The core learning loop: quiz the user on faces and names, score their recall, and schedule the next review at the optimal moment using SM-2.
 

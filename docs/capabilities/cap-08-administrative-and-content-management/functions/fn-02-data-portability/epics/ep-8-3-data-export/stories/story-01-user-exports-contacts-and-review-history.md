@@ -1,4 +1,4 @@
-# User Exports Contacts and Review History
+﻿# User Exports Contacts and Review History
 
 **As a** user, **I can** export all my contacts including names, notes, name images, and full review history as a structured file, **so that** I have an offline backup and can migrate to a new account if needed.
 

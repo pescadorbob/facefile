@@ -1,4 +1,4 @@
-# ep-3-3: Palace and Locus Selection
+﻿# ep-3-3: Palace and Locus Selection
 
 Let users define named memory palaces and assign each contact to a specific locus within one, making placement explicit and reviewable.
 

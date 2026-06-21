@@ -16,6 +16,7 @@ export const test = base.extend<FacefileFixtures>({
       const driver = new FacefileBrowserDriver(page, request);
       await use(driver);
       await driver.resetTutorialProgress();
+      await driver.deleteAllContacts();
     },
     { auto: true },
   ],

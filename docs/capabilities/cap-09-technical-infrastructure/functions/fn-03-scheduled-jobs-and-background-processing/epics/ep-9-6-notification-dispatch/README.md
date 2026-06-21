@@ -1,4 +1,4 @@
-# ep-9-6: Notification Dispatch
+﻿# ep-9-6: Notification Dispatch
 
 Send reminder notifications at user-configured times, retry failed deliveries once, and log persistent failures without spamming users.
 

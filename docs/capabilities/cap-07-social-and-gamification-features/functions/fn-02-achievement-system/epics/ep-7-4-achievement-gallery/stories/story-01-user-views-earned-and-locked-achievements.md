@@ -1,4 +1,4 @@
-# User Views Earned and Locked Achievements
+﻿# User Views Earned and Locked Achievements
 
 **As a** user, **I can** view all earned and locked achievements in a gallery, **so that** I have full visibility into what milestones exist and a sense of what I've accomplished.
 

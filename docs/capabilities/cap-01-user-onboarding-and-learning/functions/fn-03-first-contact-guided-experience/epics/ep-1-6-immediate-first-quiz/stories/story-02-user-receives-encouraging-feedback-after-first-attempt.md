@@ -1,4 +1,4 @@
-# User Receives Encouraging Feedback After First Attempt
+﻿# User Receives Encouraging Feedback After First Attempt
 
 **As a** new user after my first quiz attempt, **I can** receive encouraging feedback regardless of whether I got it right, **so that** I feel motivated to continue building the habit.
 

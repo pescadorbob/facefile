@@ -1,4 +1,4 @@
-# User Imports Exported Contact File
+﻿# User Imports Exported Contact File
 
 **As a** user, **I can** import a previously exported FaceFile JSON file to restore my contacts and review history, **so that** I can migrate between accounts or restore from a backup.
 

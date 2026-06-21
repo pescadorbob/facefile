@@ -1,4 +1,4 @@
-# User Sees Lapse Count for Contact
+﻿# User Sees Lapse Count for Contact
 
 **As a** user, **I can** see how many times a specific contact has lapsed (been rated "Forgot"), **so that** I know whether to invest in a deeper structural repair of the encoding rather than just more practice.
 

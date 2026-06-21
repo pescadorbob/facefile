@@ -1,4 +1,4 @@
-# S-1.1.3: New User Can Pause and Resume the Tutorial
+﻿# S-1.1.3: New User Can Pause and Resume the Tutorial
 
 > Epic: [E-1.1 User Learns Memory Palace Fundamentals](../README.md)
 

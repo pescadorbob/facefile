@@ -1,4 +1,4 @@
-# User Archives Event Set After Conclusion
+﻿# User Archives Event Set After Conclusion
 
 **As a** user whose event has concluded, **I can** archive or dissolve the event review set, **so that** my active lists stay clean without losing the underlying contact data.
 

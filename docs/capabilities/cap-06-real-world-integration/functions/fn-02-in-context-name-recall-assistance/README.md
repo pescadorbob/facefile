@@ -1,4 +1,4 @@
-# F-6.2: In-Context Name Recall Assistance
+﻿# F-6.2: In-Context Name Recall Assistance
 
 Provide lightweight support when the user is in a real interaction and draws a blank.
 

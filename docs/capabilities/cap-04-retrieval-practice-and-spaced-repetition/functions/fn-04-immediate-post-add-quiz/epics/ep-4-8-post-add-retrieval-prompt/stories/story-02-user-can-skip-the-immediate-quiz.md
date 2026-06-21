@@ -1,4 +1,4 @@
-# User Can Skip the Immediate Quiz
+﻿# User Can Skip the Immediate Quiz
 
 **As a** user who has just saved a new contact, **I can** skip the immediate quiz prompt, **so that** the flow never feels coercive when I'm adding multiple contacts quickly.
 

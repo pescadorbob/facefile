@@ -1,4 +1,4 @@
-# ep-4-4: Recall Rating Input
+﻿# ep-4-4: Recall Rating Input
 
 Let users rate their recall after each answer so the SM-2 algorithm has an accurate signal to compute the next interval.
 

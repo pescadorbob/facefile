@@ -1,4 +1,4 @@
-# Updated Image Is Saved Before Next Question
+﻿# Updated Image Is Saved Before Next Question
 
 **As a** user who edited their name image mid-quiz, **I can** be certain the updated image is persisted before the next question loads, **so that** the repair is not lost if the session ends unexpectedly.
 

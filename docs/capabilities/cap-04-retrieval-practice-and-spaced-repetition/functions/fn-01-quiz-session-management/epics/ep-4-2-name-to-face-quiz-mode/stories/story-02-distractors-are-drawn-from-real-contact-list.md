@@ -1,4 +1,4 @@
-# Distractors Are Drawn from Real Contact List
+﻿# Distractors Are Drawn from Real Contact List
 
 **As a** user taking a Name → Face quiz, **I can** see distractor photos drawn from my actual contact list, **so that** the task stays challenging and realistic as my list grows.
 

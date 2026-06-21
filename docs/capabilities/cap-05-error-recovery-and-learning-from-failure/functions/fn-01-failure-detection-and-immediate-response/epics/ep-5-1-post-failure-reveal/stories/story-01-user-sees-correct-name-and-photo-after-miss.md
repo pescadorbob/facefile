@@ -1,4 +1,4 @@
-# User Sees Correct Name and Photo After Miss
+﻿# User Sees Correct Name and Photo After Miss
 
 **As a** user who forgets a name during a quiz, **I can** immediately see the correct name displayed alongside the contact's photo, **so that** I can reconnect the face and name in one moment.
 

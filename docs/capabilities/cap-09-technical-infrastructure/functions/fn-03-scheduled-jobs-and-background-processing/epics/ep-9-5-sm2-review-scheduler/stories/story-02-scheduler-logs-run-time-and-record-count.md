@@ -1,4 +1,4 @@
-# Scheduler Logs Run Time and Record Count
+﻿# Scheduler Logs Run Time and Record Count
 
 **As a** system, **I can** log the start time, end time, and number of records updated for each scheduler run, **so that** failures or anomalies are detectable in application logs.
 

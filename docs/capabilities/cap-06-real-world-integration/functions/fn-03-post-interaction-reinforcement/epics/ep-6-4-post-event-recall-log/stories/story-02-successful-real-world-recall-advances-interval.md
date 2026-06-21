@@ -1,4 +1,4 @@
-# Successful Real-World Recall Advances Interval
+﻿# Successful Real-World Recall Advances Interval
 
 **As a** user who successfully used a name in conversation, **I can** log it as "Easy" so that the contact's review interval advances as if I had aced a quiz, **so that** real-world wins count toward the learning schedule.
 

@@ -1,4 +1,4 @@
-# C-8: Administrative and Content Management
+﻿# C-8: Administrative and Content Management
 
 Give users control over their account, data, and preferences — and give administrators the tools to manage the platform.
 

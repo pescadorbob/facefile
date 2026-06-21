@@ -1,4 +1,4 @@
-# E-2.1: User Adds a New Person to Palace During Meeting
+﻿# E-2.1: User Adds a New Person to Palace During Meeting
 
 > Capability: [Adding and Managing People](../../../../README.md) - Function: [Person and Palace Management](../../README.md)
 

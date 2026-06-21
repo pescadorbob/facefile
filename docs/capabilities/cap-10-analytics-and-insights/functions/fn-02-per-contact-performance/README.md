@@ -1,4 +1,4 @@
-# F-10.2: Per-Contact Performance
+﻿# F-10.2: Per-Contact Performance
 
 Drill into individual contacts to understand where effort is concentrated.
 

@@ -14,21 +14,49 @@ model User {
   createdAt           DateTime                 @default(now())
   updatedAt           DateTime                 @updatedAt
   contacts            Contact[]
+  palaces             Palace[]
   microsoftConnection UserMicrosoftConnection?
   tutorialProgress    TutorialProgress?
 }
 
+model Palace {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  loci      Locus[]
+  contacts  Contact[]
+}
+
+model Locus {
+  id        Int       @id @default(autoincrement())
+  palaceId  Int
+  palace    Palace    @relation(fields: [palaceId], references: [id])
+  name      String
+  position  Int       @default(0)
+  createdAt DateTime  @default(now())
+  contacts  Contact[]
+}
+
 model Contact {
-  id          Int          @id @default(autoincrement())
-  userId      Int
-  user        User         @relation(fields: [userId], references: [id])
-  name        String
-  photoPath   String?
-  notes       String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  reviewCard  ReviewCard?
-  quizResults QuizResult[]
+  id               Int          @id @default(autoincrement())
+  userId           Int
+  user             User         @relation(fields: [userId], references: [id])
+  name             String
+  photoPath        String?
+  notes            String?
+  palaceId         Int?
+  palace           Palace?      @relation(fields: [palaceId], references: [id])
+  locusId          Int?
+  locus            Locus?       @relation(fields: [locusId], references: [id])
+  nameImage        String?
+  associationScene String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  reviewCard       ReviewCard?
+  quizResults      QuizResult[]
 }
 
 model ReviewCard {

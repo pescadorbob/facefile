@@ -1,4 +1,4 @@
-# F-5.2: Encoding Repair
+﻿# F-5.2: Encoding Repair
 
 Give users the tools to fix a weak image right at the point of failure.
 

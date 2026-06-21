@@ -1,4 +1,4 @@
-# Photos Stored with Stable Paths
+﻿# Photos Stored with Stable Paths
 
 **As a** system, **I can** store uploaded photos at stable, predictable paths on disk or object storage, **so that** they remain accessible across application restarts and deployments.
 

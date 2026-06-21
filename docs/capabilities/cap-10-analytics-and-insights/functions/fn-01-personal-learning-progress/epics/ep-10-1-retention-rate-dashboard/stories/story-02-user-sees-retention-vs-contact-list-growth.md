@@ -1,4 +1,4 @@
-# User Sees Retention vs Contact List Growth
+﻿# User Sees Retention vs Contact List Growth
 
 **As a** user, **I can** see how my retention rate has changed as my contact list has grown, **so that** I can understand whether adding more contacts is affecting my ability to remember existing ones.
 

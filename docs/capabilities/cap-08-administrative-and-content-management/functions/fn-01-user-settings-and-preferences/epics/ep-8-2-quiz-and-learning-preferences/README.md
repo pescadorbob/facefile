@@ -1,4 +1,4 @@
-# ep-8-2: Quiz and Learning Preferences
+﻿# ep-8-2: Quiz and Learning Preferences
 
 Let users configure session length, preferred quiz direction, and whether the immediate post-add quiz is active.
 

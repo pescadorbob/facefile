@@ -29,6 +29,40 @@ export class FacefileDslAssert {
   async seesVisualExample(): Promise<void> {
     await this.dsl.driver.expectVisualExampleVisible();
   }
+
+  // ── Guided wizard ──────────────────────────────────────────────────────────
+
+  async isOnWizardStep(stepParam: string): Promise<void> {
+    const step = parseInt(parseParam(stepParam, 'step'), 10);
+    await this.dsl.driver.expectWizardStepCounter(step);
+  }
+
+  async seesNameRequiredError(): Promise<void> {
+    await this.dsl.driver.expectNameRequiredErrorVisible();
+  }
+
+  async seesNameProminentlyOnStep3(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectProminentNameContains(name);
+  }
+
+  async seesNameImageTechniqueHints(): Promise<void> {
+    await this.dsl.driver.expectTechniqueHintsVisible();
+  }
+
+  async landedOnQuizPage(): Promise<void> {
+    await this.dsl.driver.expectOnQuizPage();
+  }
+
+  async seesPalaceInWizard(nameParam: string): Promise<void> {
+    const name = parseParam(nameParam, 'palace');
+    await this.dsl.driver.expectPalaceButtonVisible(name);
+  }
+
+  async seesNameImagePreservedAfterBack(imageParam: string): Promise<void> {
+    const image = parseParam(imageParam, 'image');
+    await this.dsl.driver.expectWizardNameImageFieldContains(image);
+  }
 }
 
 export function confirmThat(facefile: FacefileDsl): FacefileDslAssert {

@@ -1,4 +1,4 @@
-# Validation Errors Return 400 with Field-Level Detail
+﻿# Validation Errors Return 400 with Field-Level Detail
 
 **As a** developer, **I can** receive a 400 response with field-level error detail when a request body fails validation, **so that** the frontend can surface specific, actionable error messages next to the relevant fields.
 

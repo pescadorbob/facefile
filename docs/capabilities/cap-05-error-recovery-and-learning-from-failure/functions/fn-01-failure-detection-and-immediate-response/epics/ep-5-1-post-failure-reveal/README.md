@@ -1,4 +1,4 @@
-# ep-5-1: Post-Failure Reveal
+﻿# ep-5-1: Post-Failure Reveal
 
 When a user misses a name, immediately show them the correct answer together with their saved encoding cues so they can reconnect face, name, and image in one moment.
 

@@ -1,4 +1,4 @@
-# User Assigns Contact to a Locus
+﻿# User Assigns Contact to a Locus
 
 **As a** user, **I can** assign a contact to a specific locus within a palace (e.g., "door", "projector", "window"), **so that** their spatial placement is explicit and reviewable.
 

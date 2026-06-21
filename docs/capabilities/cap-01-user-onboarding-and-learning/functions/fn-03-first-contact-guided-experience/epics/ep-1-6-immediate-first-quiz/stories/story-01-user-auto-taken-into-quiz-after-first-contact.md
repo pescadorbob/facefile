@@ -1,4 +1,4 @@
-# User Auto-Taken Into Quiz After First Contact
+﻿# User Auto-Taken Into Quiz After First Contact
 
 **As a** new user who just added their first contact, **I can** be automatically taken into a one-question quiz, **so that** I experience retrieval practice within the critical 10–60 second encoding window.
 

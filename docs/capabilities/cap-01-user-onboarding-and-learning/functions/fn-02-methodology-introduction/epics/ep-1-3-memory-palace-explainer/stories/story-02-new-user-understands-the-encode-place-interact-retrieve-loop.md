@@ -1,4 +1,4 @@
-# New User Understands the Encode-Place-Interact-Retrieve Loop
+﻿# New User Understands the Encode-Place-Interact-Retrieve Loop
 
 **As a** new user, **I can** see the four-step encode → place → interact → retrieve loop explained before I add my first person, **so that** I know what each part of the app is for.
 

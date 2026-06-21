@@ -1,4 +1,4 @@
-# ep-7-2: Streak Recovery
+﻿# ep-7-2: Streak Recovery
 
 Show users how close they were to a milestone when they miss a day, and offer a monthly streak-freeze grace day so a single miss doesn't destroy a long streak.
 

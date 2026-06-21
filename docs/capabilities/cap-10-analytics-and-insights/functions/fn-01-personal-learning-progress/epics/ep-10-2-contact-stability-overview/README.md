@@ -1,4 +1,4 @@
-# ep-10-2: Contact Stability Overview
+﻿# ep-10-2: Contact Stability Overview
 
 Show users how their contacts break down by review interval bucket and the average time to stabilize a new contact.
 

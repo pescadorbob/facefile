@@ -1,4 +1,4 @@
-# User Sees Due Count on Login
+﻿# User Sees Due Count on Login
 
 **As a** user logging in, **I can** immediately see how many contacts are due for review today, **so that** I know exactly where to start without navigating through menus.
 

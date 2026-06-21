@@ -1,4 +1,4 @@
-# User Sees 14-Day Review Projection
+﻿# User Sees 14-Day Review Projection
 
 **As a** user, **I can** see a projection of how many reviews are coming up each day over the next two weeks, **so that** I can anticipate heavy days and spread the load by practicing ahead.
 

@@ -1,4 +1,4 @@
-# User Launches Review Filtered to Group
+﻿# User Launches Review Filtered to Group
 
 **As a** user preparing for a meeting or event, **I can** launch a review session filtered to a specific group, **so that** I rehearse exactly the people I'm about to see without reviewing unrelated contacts.
 

@@ -1,4 +1,4 @@
-# F-9.4: API Design and Reliability
+﻿# F-9.4: API Design and Reliability
 
 Provide a consistent, well-structured API that the Angular frontend can depend on.
 

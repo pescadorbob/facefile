@@ -1,4 +1,4 @@
-# F-3.3: Interaction Encoding
+﻿# F-3.3: Interaction Encoding
 
 Capture the interaction between the image and the locus — the elaboration step that makes static images stick.
 

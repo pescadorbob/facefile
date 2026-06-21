@@ -1,4 +1,4 @@
-# User Sees Example Encodings for Common Names
+﻿# User Sees Example Encodings for Common Names
 
 **As a** user learning the encoding technique, **I can** see worked examples of name images for common names, **so that** I understand what a strong, vivid encoding looks like.
 

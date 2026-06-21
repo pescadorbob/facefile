@@ -1,4 +1,4 @@
-# Import Conflicts Are Flagged Before Finalizing
+﻿# Import Conflicts Are Flagged Before Finalizing
 
 **As a** user importing data, **I can** see a list of conflicts (e.g., duplicate contact names) before the import is finalized, **so that** I don't accidentally overwrite good data with stale data from a backup.
 

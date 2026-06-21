@@ -1,4 +1,4 @@
-# User Rates Recall Quality After Each Answer
+﻿# User Rates Recall Quality After Each Answer
 
 **As a** user after answering a quiz question, **I can** rate my recall quality (Forgot / Hard / Good / Easy), **so that** the SM-2 algorithm has an accurate signal to schedule the next review.
 

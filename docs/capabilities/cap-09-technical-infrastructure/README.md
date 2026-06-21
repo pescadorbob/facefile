@@ -1,4 +1,4 @@
-# C-9: Technical Infrastructure
+﻿# C-9: Technical Infrastructure
 
 The platform-level capabilities that make the product reliable, secure, and scalable — invisible to users when working correctly, painful when not.
 

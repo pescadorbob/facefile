@@ -1,4 +1,4 @@
-# User Starts Session with Only Due Contacts
+﻿# User Starts Session with Only Due Contacts
 
 **As a** user starting a quiz session, **I can** choose to include only contacts whose review date has passed, **so that** my time is spent where the SM-2 schedule says it matters most.
 

@@ -1,4 +1,4 @@
-# ep-9-2: Data Isolation
+﻿# ep-9-2: Data Isolation
 
 Scope every database query to the authenticated user's ID and protect uploaded photos with access-controlled URLs so no user can access another user's data.
 

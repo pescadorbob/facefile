@@ -1,4 +1,4 @@
-# F-5.1: Failure Detection and Immediate Response
+﻿# F-5.1: Failure Detection and Immediate Response
 
 Detect a missed recall at the moment it happens and respond constructively — not punitively.
 

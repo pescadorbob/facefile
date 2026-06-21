@@ -1,4 +1,4 @@
-# User Walks Palace in Locus Order
+﻿# User Walks Palace in Locus Order
 
 **As a** user preparing for an event, **I can** view contacts in their palace locus order within the app, **so that** I can mentally rehearse the spatial sequence before arriving.
 

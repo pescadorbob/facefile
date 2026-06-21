@@ -1,4 +1,4 @@
-# User Sets Reminder Time of Day
+﻿# User Sets Reminder Time of Day
 
 **As a** user, **I can** set the time of day I receive review reminders, **so that** they arrive when I'm most likely to act on them rather than at a generic system time.
 

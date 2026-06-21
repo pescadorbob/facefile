@@ -1,0 +1,12 @@
+﻿# Normalize all text files to CRLF on checkout (Windows)
+* text=auto eol=crlf
+
+# Force binary files to avoid corruption
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.db binary
+*.sqlite binary

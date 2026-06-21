@@ -1,4 +1,4 @@
-# Schema Changes Versioned via Prisma Migrations
+﻿# Schema Changes Versioned via Prisma Migrations
 
 **As a** system, **I can** manage all schema changes through Prisma migrations, **so that** every change is versioned, reversible, and applied consistently across environments.
 

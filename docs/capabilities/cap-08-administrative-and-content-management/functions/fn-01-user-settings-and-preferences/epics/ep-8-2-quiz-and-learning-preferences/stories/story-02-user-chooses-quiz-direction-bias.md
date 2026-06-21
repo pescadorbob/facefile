@@ -1,4 +1,4 @@
-# User Chooses Quiz Direction Bias
+﻿# User Chooses Quiz Direction Bias
 
 **As a** user, **I can** configure my quiz sessions to bias toward Face → Name, Name → Face, or stay balanced, **so that** I can focus practice on my weaker retrieval direction.
 

@@ -1,4 +1,4 @@
-# F-10.3: Usage and Habit Insights
+﻿# F-10.3: Usage and Habit Insights
 
 Help users understand their practice patterns so they can optimize their routine.
 

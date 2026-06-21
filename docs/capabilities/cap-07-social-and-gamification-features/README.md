@@ -1,4 +1,4 @@
-# C-7: Social and Gamification Features
+﻿# C-7: Social and Gamification Features
 
 Build momentum and habit through streaks, achievements, and optional social accountability — without turning a learning tool into a game that rewards the wrong behaviors.
 

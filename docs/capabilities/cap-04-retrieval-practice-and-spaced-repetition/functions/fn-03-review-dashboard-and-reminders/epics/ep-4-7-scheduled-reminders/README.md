@@ -1,4 +1,4 @@
-# ep-4-7: Scheduled Reminders
+﻿# ep-4-7: Scheduled Reminders
 
 Send push or email notifications when reviews are due, at a time the user has configured, so they don't forget to practice.
 

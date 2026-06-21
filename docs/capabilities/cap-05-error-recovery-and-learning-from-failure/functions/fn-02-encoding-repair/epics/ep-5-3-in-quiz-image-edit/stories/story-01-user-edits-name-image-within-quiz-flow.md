@@ -1,4 +1,4 @@
-# User Edits Name Image Within Quiz Flow
+﻿# User Edits Name Image Within Quiz Flow
 
 **As a** user who missed a name, **I can** edit my name image or interaction description directly from the post-failure reveal screen, **so that** I repair the encoding while the failure context is still fresh.
 

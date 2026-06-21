@@ -1,4 +1,4 @@
-# User Sees Rating Explanation on First Use
+﻿# User Sees Rating Explanation on First Use
 
 **As a** new user rating their recall for the first time, **I can** see a brief explanation of what each rating level means, **so that** I calibrate my ratings consistently from the start.
 

@@ -1,4 +1,4 @@
-# ep-3-1: Guided Image Creation
+﻿# ep-3-1: Guided Image Creation
 
 Prompt the user to create a name image using one of three techniques — sound-alike, meaning-based, or syllable split — so they always have a starting point for encoding.
 

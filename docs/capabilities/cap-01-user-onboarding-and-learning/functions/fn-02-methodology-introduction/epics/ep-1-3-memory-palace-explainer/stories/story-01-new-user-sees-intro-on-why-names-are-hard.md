@@ -1,4 +1,4 @@
-# New User Sees Intro on Why Names Are Hard
+﻿# New User Sees Intro on Why Names Are Hard
 
 **As a** new user, **I can** see a brief introduction explaining that names are arbitrary and that spatial and image encoding is how to make them stick, **so that** I understand the core problem FaceFile solves before I use it.
 

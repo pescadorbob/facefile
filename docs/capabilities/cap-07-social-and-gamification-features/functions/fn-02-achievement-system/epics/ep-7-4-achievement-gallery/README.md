@@ -1,4 +1,4 @@
-# ep-7-4: Achievement Gallery
+﻿# ep-7-4: Achievement Gallery
 
 Let users view all earned and locked achievements so they have visibility into what milestones exist and direction toward the next one.
 

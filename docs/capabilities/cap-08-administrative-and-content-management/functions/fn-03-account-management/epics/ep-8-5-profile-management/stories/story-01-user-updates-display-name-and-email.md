@@ -1,4 +1,4 @@
-# User Updates Display Name and Email
+﻿# User Updates Display Name and Email
 
 **As a** user, **I can** update my display name and email address at any time, **so that** my account reflects my current identity.
 

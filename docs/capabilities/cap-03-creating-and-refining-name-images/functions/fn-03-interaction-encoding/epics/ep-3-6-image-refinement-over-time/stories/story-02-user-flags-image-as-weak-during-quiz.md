@@ -1,4 +1,4 @@
-# User Flags Image as Weak During Quiz
+﻿# User Flags Image as Weak During Quiz
 
 **As a** user reviewing a contact during a quiz, **I can** flag their name image as "weak" even when I get the answer right, **so that** it surfaces for refinement in a future session before it causes a miss.
 

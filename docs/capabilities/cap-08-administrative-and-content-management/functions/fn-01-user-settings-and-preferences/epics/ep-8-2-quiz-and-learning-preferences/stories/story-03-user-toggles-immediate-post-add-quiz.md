@@ -1,4 +1,4 @@
-# User Toggles Immediate Post-Add Quiz
+﻿# User Toggles Immediate Post-Add Quiz
 
 **As a** user, **I can** enable or disable the immediate post-add quiz prompt, **so that** the workflow fits my pace when I'm adding contacts in bulk or under time pressure.
 

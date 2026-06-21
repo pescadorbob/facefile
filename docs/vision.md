@@ -1,4 +1,4 @@
-# Vision
+﻿# Vision
 
 You can use a memory palace to remember people's names in a way that aligns tightly with the learning principles in Make It Stick—especially **elaboration**, **retrieval practice**, and **errorful encoding**. Here's a practical, realistic way to do it (not a caricatured "mnemonic trick").
 

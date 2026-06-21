@@ -1,4 +1,4 @@
-# ep-8-5: Profile Management
+﻿# ep-8-5: Profile Management
 
 Let users update their display name, email address, and password to keep their account current and secure.
 

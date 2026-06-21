@@ -1,4 +1,4 @@
-# F-6.1: Pre-Event Preparation
+﻿# F-6.1: Pre-Event Preparation
 
 Help users review the relevant people before walking into a meeting, party, or networking event.
 

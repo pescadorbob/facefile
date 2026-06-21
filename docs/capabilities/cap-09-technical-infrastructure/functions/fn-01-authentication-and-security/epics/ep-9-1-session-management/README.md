@@ -1,4 +1,4 @@
-# ep-9-1: Session Management
+﻿# ep-9-1: Session Management
 
 Issue and validate JWT tokens on every protected request, and refresh them transparently before expiry so users are not logged out unexpectedly.
 

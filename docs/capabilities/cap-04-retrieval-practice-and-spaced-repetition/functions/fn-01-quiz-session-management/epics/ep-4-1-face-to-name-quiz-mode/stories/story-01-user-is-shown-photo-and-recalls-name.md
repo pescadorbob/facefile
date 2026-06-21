@@ -1,4 +1,4 @@
-# User Is Shown Photo and Recalls Name
+﻿# User Is Shown Photo and Recalls Name
 
 **As a** user in a quiz session, **I can** be shown a contact's photo and type or select their name, **so that** I practice the real-world face-first recall direction.
 

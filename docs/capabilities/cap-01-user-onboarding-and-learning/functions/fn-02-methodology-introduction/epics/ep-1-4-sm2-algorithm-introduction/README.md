@@ -1,4 +1,4 @@
-# ep-1-4: SM-2 Algorithm Introduction
+﻿# ep-1-4: SM-2 Algorithm Introduction
 
 User understands spaced repetition and how their recall ratings control when they see someone again.
 

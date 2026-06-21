@@ -1,4 +1,4 @@
-# ep-5-6: Recovery Progress Visibility
+﻿# ep-5-6: Recovery Progress Visibility
 
 Show users a contact's lapse history and signal when a previously difficult contact has finally reached a stable interval, so recovery progress is visible.
 

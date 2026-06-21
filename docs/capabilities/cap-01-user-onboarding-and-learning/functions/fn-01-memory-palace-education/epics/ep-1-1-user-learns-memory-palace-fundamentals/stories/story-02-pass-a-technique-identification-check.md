@@ -1,4 +1,4 @@
-# S-1.1.2: New User Passes a Technique Identification Check
+﻿# S-1.1.2: New User Passes a Technique Identification Check
 
 > Epic: [E-1.1 User Learns Memory Palace Fundamentals](../README.md)
 

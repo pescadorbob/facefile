@@ -1,4 +1,4 @@
-# ep-10-3: Contact History View
+﻿# ep-10-3: Contact History View
 
 Let users view the full review timeline for a specific contact and see how many times they've lapsed on that encoding.
 

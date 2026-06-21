@@ -1,4 +1,4 @@
-# User Sees Saved Name Image After Miss
+﻿# User Sees Saved Name Image After Miss
 
 **As a** user who forgets a name, **I can** see my saved name image and interaction description on the post-failure reveal screen, **so that** I can identify why the encoding failed.
 

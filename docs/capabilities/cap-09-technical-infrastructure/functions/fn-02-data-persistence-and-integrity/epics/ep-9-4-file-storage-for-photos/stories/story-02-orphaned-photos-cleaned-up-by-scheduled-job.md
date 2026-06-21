@@ -1,4 +1,4 @@
-# Orphaned Photos Cleaned Up by Scheduled Job
+﻿# Orphaned Photos Cleaned Up by Scheduled Job
 
 **As a** system, **I can** run a scheduled cleanup job that deletes photo files whose corresponding contact records have been removed, **so that** storage doesn't grow unbounded from deleted contacts.
 

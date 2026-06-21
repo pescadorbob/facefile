@@ -1,4 +1,4 @@
-# System Refreshes Tokens Before Expiry
+﻿# System Refreshes Tokens Before Expiry
 
 **As a** system, **I can** issue a new access token using a long-lived refresh token before the current access token expires, **so that** active users are not unexpectedly logged out during a session.
 

@@ -1,4 +1,4 @@
-# C-6: Real-World Integration
+﻿# C-6: Real-World Integration
 
 Learning names in the app only matters if users can use them in the real world. This capability bridges the gap: preparing before events, supporting in-the-moment recall, and reinforcing memory after face-to-face interactions.
 

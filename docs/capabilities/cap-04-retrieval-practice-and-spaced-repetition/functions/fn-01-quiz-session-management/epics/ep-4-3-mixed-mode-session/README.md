@@ -1,4 +1,4 @@
-# ep-4-3: Mixed Mode Session
+﻿# ep-4-3: Mixed Mode Session
 
 Randomly mix Face → Name and Name → Face questions in a single session to practice both retrieval directions.
 

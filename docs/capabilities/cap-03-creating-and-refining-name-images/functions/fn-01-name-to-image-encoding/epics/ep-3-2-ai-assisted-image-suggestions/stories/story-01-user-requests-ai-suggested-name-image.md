@@ -1,4 +1,4 @@
-# User Requests AI-Suggested Name Image
+﻿# User Requests AI-Suggested Name Image
 
 **As a** user stuck on an unfamiliar name, **I can** request an AI-generated name image suggestion, **so that** I'm never blocked by a name I can't visualize.
 

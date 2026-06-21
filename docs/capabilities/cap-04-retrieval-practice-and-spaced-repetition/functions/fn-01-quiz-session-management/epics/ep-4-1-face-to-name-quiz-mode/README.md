@@ -1,4 +1,4 @@
-# ep-4-1: Face → Name Quiz Mode
+﻿# ep-4-1: Face → Name Quiz Mode
 
 Show the user a contact's photo and require them to recall the name — the primary real-world recall direction.
 

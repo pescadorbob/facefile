@@ -1,4 +1,4 @@
-# Locked Achievements Show a Hint of Requirement
+﻿# Locked Achievements Show a Hint of Requirement
 
 **As a** user viewing the achievement gallery, **I can** see a hint of what each locked achievement requires, **so that** I have direction toward the next milestone without having the surprise spoiled.
 

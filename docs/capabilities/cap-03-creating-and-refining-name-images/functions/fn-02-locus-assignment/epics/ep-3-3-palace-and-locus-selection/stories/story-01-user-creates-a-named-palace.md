@@ -1,4 +1,4 @@
-# User Creates a Named Palace
+﻿# User Creates a Named Palace
 
 **As a** user, **I can** create a named memory palace (e.g., "My Office", "Weekly Meeting Room"), **so that** I have a reusable spatial container for placing contacts.
 

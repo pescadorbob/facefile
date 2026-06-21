@@ -1,4 +1,4 @@
-# User Pauses Reminders for Set Period
+﻿# User Pauses Reminders for Set Period
 
 **As a** user going on vacation or unavailable for a period, **I can** pause all reminders for a set number of days, **so that** I'm not notified when I can't act on the reminders.
 

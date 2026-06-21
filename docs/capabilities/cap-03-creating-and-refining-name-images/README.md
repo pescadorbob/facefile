@@ -1,4 +1,4 @@
-# C-3: Creating and Refining Name Images
+﻿# C-3: Creating and Refining Name Images
 
 The heart of the memory palace method: turning an arbitrary name into a vivid, retrievable image and anchoring it to a stable locus. Maps directly to Steps 2–4 of the vision methodology.
 

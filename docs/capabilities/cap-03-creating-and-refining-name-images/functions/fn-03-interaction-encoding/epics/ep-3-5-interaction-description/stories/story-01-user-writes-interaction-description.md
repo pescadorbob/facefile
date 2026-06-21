@@ -1,4 +1,4 @@
-# User Writes Interaction Description
+﻿# User Writes Interaction Description
 
 **As a** user, **I can** write a brief description of how my name image interacts with the locus (e.g., "Sarah's sari catches on the door handle"), **so that** the elaboration is saved and reviewable during quizzes.
 

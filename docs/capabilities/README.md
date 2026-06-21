@@ -1,4 +1,4 @@
-# FaceFile Product Hierarchy
+﻿# FaceFile Product Hierarchy
 
 Product scope is organized in four levels:
 

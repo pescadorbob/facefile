@@ -1,4 +1,4 @@
-# ep-3-2: AI-Assisted Image Suggestions
+﻿# ep-3-2: AI-Assisted Image Suggestions
 
 Let users request a suggested name image from the app when they are stuck on an unfamiliar or difficult name.
 

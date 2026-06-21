@@ -1,4 +1,4 @@
-# ep-1-6: Immediate First Quiz
+﻿# ep-1-6: Immediate First Quiz
 
 User is taken directly into a one-question quiz immediately after adding their first contact.
 

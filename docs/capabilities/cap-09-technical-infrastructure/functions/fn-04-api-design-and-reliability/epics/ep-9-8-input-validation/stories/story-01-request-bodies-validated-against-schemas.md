@@ -1,4 +1,4 @@
-# Request Bodies Validated Against Schemas
+﻿# Request Bodies Validated Against Schemas
 
 **As a** system, **I can** validate all incoming request bodies against defined schemas before any processing begins, **so that** invalid data never reaches the database or business logic layer.
 

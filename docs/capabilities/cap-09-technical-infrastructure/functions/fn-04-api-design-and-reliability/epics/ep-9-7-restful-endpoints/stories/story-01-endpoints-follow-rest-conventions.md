@@ -1,4 +1,4 @@
-# Endpoints Follow REST Conventions
+﻿# Endpoints Follow REST Conventions
 
 **As a** developer building the Angular frontend, **I can** rely on all API endpoints following standard REST conventions (GET/POST/PUT/DELETE with resource-based URLs), **so that** the API is predictable and easy to consume.
 

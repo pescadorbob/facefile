@@ -1,4 +1,4 @@
-# F-7.3: Social Accountability (Optional)
+﻿# F-7.3: Social Accountability (Optional)
 
 Let users opt into lightweight social features that create accountability without pressure.
 

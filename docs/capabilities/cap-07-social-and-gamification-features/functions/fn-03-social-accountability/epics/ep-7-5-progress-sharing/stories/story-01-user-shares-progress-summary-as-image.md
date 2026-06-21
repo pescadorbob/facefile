@@ -1,4 +1,4 @@
-# User Shares Progress Summary as Image
+﻿# User Shares Progress Summary as Image
 
 **As a** user, **I can** generate and share a visual summary of my learning progress (e.g., "47 names learned in 30 days"), **so that** I can celebrate publicly if I choose.
 

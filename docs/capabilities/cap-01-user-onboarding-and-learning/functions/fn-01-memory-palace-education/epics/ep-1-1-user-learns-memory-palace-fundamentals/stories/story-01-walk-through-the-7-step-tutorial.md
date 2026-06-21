@@ -1,4 +1,4 @@
-# S-1.1.1: New User Walks Through the 7-Step Fundamentals Tutorial
+﻿# S-1.1.1: New User Walks Through the 7-Step Fundamentals Tutorial
 
 > Epic: [E-1.1 User Learns Memory Palace Fundamentals](../README.md)
 

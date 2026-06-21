@@ -1,4 +1,4 @@
-# Lapse Event Is Logged
+﻿# Lapse Event Is Logged
 
 **As a** system, **I can** log each lapse event with a timestamp, **so that** the user can later see which contacts have lapsed most often and the analytics dashboard has accurate data.
 

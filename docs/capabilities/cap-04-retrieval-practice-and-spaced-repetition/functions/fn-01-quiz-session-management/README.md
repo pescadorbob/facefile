@@ -1,4 +1,4 @@
-# F-4.1: Quiz Session Management
+﻿# F-4.1: Quiz Session Management
 
 Deliver effective, randomized quiz sessions across both quiz modes.
 

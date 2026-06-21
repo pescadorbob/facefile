@@ -1,4 +1,4 @@
-# User Sees Contacts by Interval Bucket
+﻿# User Sees Contacts by Interval Bucket
 
 **As a** user, **I can** see a breakdown of my contacts grouped by review interval bucket (< 7 days, 7–30 days, > 30 days), **so that** I know how many names are truly stable versus still being learned.
 

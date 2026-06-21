@@ -1,4 +1,4 @@
-# ep-3-4: Locus Conflict Management
+﻿# ep-3-4: Locus Conflict Management
 
 Warn users when two contacts share the same locus in the same palace, and let them resolve conflicts by moving contacts to new positions.
 

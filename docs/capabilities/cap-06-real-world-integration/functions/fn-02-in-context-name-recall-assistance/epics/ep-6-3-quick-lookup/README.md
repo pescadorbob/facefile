@@ -1,4 +1,4 @@
-# ep-6-3: Quick Lookup
+﻿# ep-6-3: Quick Lookup
 
 Let users search for a person by partial name or descriptor and view their name image in a quick-glance view so they can reconstruct the cue discreetly during a real interaction.
 

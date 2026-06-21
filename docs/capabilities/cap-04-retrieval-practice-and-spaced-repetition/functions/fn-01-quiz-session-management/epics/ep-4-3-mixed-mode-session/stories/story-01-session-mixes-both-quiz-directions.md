@@ -1,4 +1,4 @@
-# Session Mixes Both Quiz Directions
+﻿# Session Mixes Both Quiz Directions
 
 **As a** user in a mixed-mode session, **I can** receive both Face → Name and Name → Face questions in random order, **so that** both retrieval directions are practiced in every session.
 

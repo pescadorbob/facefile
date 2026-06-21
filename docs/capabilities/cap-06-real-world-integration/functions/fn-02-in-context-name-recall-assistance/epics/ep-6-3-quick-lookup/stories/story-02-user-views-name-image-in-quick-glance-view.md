@@ -1,4 +1,4 @@
-# User Views Name Image in Quick-Glance View
+﻿# User Views Name Image in Quick-Glance View
 
 **As a** user who has found the contact they were looking for, **I can** see their name image and interaction description in a compact quick-glance view, **so that** I can reconstruct the cue on the spot.
 

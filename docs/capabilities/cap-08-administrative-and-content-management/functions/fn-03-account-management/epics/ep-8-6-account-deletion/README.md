@@ -1,4 +1,4 @@
-# ep-8-6: Account Deletion
+﻿# ep-8-6: Account Deletion
 
 Let users permanently delete their account and all associated data, with a clear summary of what will be removed before confirming.
 

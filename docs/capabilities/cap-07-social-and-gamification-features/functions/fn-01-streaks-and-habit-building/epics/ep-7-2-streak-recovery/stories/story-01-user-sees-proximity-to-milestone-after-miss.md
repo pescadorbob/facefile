@@ -1,4 +1,4 @@
-# User Sees Proximity to Milestone After Miss
+﻿# User Sees Proximity to Milestone After Miss
 
 **As a** user who has just missed a day and broken their streak, **I can** see how close I was to my next streak milestone, **so that** the loss feels specific and motivating rather than total.
 

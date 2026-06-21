@@ -1,4 +1,4 @@
-# F-9.2: Data Persistence and Integrity
+﻿# F-9.2: Data Persistence and Integrity
 
 Ensure contact, image, and review data is stored reliably and can survive application restarts.
 

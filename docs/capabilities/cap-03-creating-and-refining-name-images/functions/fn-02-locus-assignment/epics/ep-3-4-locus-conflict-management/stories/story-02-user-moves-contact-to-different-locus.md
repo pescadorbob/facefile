@@ -1,4 +1,4 @@
-# User Moves Contact to Different Locus
+﻿# User Moves Contact to Different Locus
 
 **As a** user, **I can** reassign a contact to a different locus within the same or a different palace, **so that** I can resolve conflicts or improve my spatial layout.
 

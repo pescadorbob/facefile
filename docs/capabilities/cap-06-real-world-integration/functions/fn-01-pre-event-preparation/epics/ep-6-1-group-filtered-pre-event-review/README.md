@@ -1,4 +1,4 @@
-# ep-6-1: Group-Filtered Pre-Event Review
+﻿# ep-6-1: Group-Filtered Pre-Event Review
 
 Let users launch a quick review session filtered to a specific group, and mentally walk a palace in locus order, so they rehearse exactly who they're about to see.
 

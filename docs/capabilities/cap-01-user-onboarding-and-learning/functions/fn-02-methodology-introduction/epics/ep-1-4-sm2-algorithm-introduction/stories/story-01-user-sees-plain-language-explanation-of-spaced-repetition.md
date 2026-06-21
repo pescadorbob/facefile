@@ -1,4 +1,4 @@
-# User Sees Plain Language Explanation of Spaced Repetition
+﻿# User Sees Plain Language Explanation of Spaced Repetition
 
 **As a** new user, **I can** see a plain-language explanation of spaced repetition, **so that** I understand why review timing matters and why I should not just cram.
 

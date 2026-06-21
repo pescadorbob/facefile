@@ -1,4 +1,4 @@
-# F-8.1: User Settings and Preferences
+﻿# F-8.1: User Settings and Preferences
 
 Let users tailor the app to their workflow and learning style.
 

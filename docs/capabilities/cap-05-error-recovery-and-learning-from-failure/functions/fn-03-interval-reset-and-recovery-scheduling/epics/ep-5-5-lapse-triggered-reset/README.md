@@ -1,4 +1,4 @@
-# ep-5-5: Lapse-Triggered Reset
+﻿# ep-5-5: Lapse-Triggered Reset
 
 Reset the SM-2 interval to 1 day on a "Forgot" rating and log the lapse event so the system responds aggressively to memory failures.
 

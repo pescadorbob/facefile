@@ -1,4 +1,4 @@
-# User Prompted to Create Name Image Before Saving
+﻿# User Prompted to Create Name Image Before Saving
 
 **As a** new user adding my first contact, **I can** be prompted to create a name image (e.g. "Ben → bent beam") before saving, **so that** the encoding habit starts immediately with my very first contact.
 

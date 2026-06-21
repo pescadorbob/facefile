@@ -1,4 +1,4 @@
-# E-1.1: User Learns Memory Palace Fundamentals
+﻿# E-1.1: User Learns Memory Palace Fundamentals
 
 > Capability: [User Onboarding and Learning](../../../../README.md) — Function: [Memory Palace Education](../../README.md)
 

@@ -1,4 +1,4 @@
-# Failed Deliveries Retried Once Then Logged
+﻿# Failed Deliveries Retried Once Then Logged
 
 **As a** system, **I can** retry a failed notification delivery once before logging it as a persistent failure, **so that** transient errors don't cause missed reminders while delivery spamming is avoided.
 

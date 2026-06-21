@@ -1,4 +1,4 @@
-# ep-8-1: Notification Preferences
+﻿# ep-8-1: Notification Preferences
 
 Let users control when and how they receive review reminders, including vacation mode to pause all notifications.
 

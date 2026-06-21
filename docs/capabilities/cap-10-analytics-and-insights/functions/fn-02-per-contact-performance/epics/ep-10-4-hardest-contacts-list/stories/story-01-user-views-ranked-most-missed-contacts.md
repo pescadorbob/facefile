@@ -1,4 +1,4 @@
-# User Views Ranked Most-Missed Contacts
+﻿# User Views Ranked Most-Missed Contacts
 
 **As a** user, **I can** see a ranked list of my contacts ordered by total miss count, **so that** I know exactly where to focus my encoding repair sessions.
 

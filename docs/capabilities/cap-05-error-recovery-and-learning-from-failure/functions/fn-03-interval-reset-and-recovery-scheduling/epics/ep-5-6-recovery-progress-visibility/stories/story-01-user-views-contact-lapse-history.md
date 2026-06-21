@@ -1,4 +1,4 @@
-# User Views Contact Lapse History
+﻿# User Views Contact Lapse History
 
 **As a** user, **I can** see the full lapse history for a specific contact, **so that** I understand how many times I've needed to rebuild that encoding and can decide whether a deeper structural repair is needed.
 

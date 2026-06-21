@@ -1,4 +1,4 @@
-# User Sets Max Questions Per Session
+﻿# User Sets Max Questions Per Session
 
 **As a** user, **I can** set the maximum number of quiz questions per session, **so that** sessions fit my available time rather than running until all due contacts are exhausted.
 

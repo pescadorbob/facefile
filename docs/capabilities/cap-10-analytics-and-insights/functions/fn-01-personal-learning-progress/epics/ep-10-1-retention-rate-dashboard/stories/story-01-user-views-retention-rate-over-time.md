@@ -1,4 +1,4 @@
-# User Views Retention Rate Over Time
+﻿# User Views Retention Rate Over Time
 
 **As a** user, **I can** see my overall retention rate (percentage of quiz answers that were correct) over the last 7, 30, and 90 days, **so that** I understand whether my recall is improving, steady, or declining.
 

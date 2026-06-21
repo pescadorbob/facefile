@@ -1,4 +1,4 @@
-# F-1.3: First-Contact Guided Experience
+﻿# F-1.3: First-Contact Guided Experience
 
 Walk the user through their first add-quiz cycle so the workflow becomes intuitive immediately.
 

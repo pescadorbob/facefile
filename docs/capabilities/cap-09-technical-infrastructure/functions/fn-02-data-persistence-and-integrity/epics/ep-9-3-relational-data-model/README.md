@@ -1,4 +1,4 @@
-# ep-9-3: Relational Data Model (Prisma + SQLite)
+﻿# ep-9-3: Relational Data Model (Prisma + SQLite)
 
 Store contacts, review history, and SM-2 parameters in a normalized schema managed via Prisma migrations.
 

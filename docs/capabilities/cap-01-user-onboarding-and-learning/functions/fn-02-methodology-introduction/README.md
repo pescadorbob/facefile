@@ -1,4 +1,4 @@
-# F-1.2: Methodology Introduction
+﻿# F-1.2: Methodology Introduction
 
 Teach the user the memory palace system so they understand *why* the app works, not just *how* to use it.
 

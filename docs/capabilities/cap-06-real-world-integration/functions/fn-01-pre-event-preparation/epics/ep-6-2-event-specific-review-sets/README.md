@@ -1,4 +1,4 @@
-# ep-6-2: Event-Specific Review Sets
+﻿# ep-6-2: Event-Specific Review Sets
 
 Let users create a temporary review set for a one-time event without modifying their permanent group structure, and dissolve it cleanly afterward.
 

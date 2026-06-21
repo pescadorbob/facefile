@@ -1,4 +1,4 @@
-# User Earns 30-Day Streak Achievement
+﻿# User Earns 30-Day Streak Achievement
 
 **As a** user, **I can** earn an achievement for completing 30 consecutive days of practice, **so that** long-term habit formation is recognized and rewarded.
 

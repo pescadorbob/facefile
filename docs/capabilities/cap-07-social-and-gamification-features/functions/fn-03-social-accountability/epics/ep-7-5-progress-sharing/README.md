@@ -1,4 +1,4 @@
-# ep-7-5: Progress Sharing
+﻿# ep-7-5: Progress Sharing
 
 Let users share a summary of their learning progress as an image — always opt-in, never automated.
 

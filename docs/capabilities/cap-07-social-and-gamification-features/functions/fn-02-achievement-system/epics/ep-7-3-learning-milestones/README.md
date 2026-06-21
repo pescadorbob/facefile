@@ -1,4 +1,4 @@
-# ep-7-3: Learning Milestones
+﻿# ep-7-3: Learning Milestones
 
 Award achievements for concrete learning milestones — first 10 stable contacts, 30-day streak, and successful long-interval recall — so progress is celebrated meaningfully.
 

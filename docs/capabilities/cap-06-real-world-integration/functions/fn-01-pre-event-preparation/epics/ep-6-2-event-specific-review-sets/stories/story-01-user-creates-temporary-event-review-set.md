@@ -1,4 +1,4 @@
-# User Creates Temporary Event Review Set
+﻿# User Creates Temporary Event Review Set
 
 **As a** user attending a one-time event, **I can** create a temporary review set for it, **so that** I'm not modifying my permanent group structure for a short-term need.
 

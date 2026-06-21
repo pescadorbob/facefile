@@ -1,4 +1,4 @@
-# F-5.3: Interval Reset and Recovery Scheduling
+﻿# F-5.3: Interval Reset and Recovery Scheduling
 
 Ensure the SM-2 schedule responds aggressively to lapses so forgotten names get drilled back up.
 

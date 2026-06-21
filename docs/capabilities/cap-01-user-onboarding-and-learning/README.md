@@ -1,4 +1,4 @@
-# C-1: User Onboarding and Learning
+﻿# C-1: User Onboarding and Learning
 
 Help new users understand the memory palace methodology and get their first meaningful win — a name they actually remember — within their first session.
 

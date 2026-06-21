@@ -1,4 +1,4 @@
-# Challenge Shows Streak and Count, Not Names
+﻿# Challenge Shows Streak and Count, Not Names
 
 **As a** user in a 30-day challenge, **I can** see only my friend's current streak and total contact count, **so that** privacy is fully preserved while accountability is maintained.
 

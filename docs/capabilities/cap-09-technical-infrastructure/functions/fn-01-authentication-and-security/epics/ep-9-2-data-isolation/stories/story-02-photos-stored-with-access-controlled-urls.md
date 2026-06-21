@@ -1,4 +1,4 @@
-# Photos Stored with Access-Controlled URLs
+﻿# Photos Stored with Access-Controlled URLs
 
 **As a** system, **I can** store uploaded photos such that they cannot be accessed via a direct URL without authentication, **so that** contact photos are never publicly accessible.
 

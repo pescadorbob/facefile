@@ -1,4 +1,4 @@
-# ep-9-7: RESTful Endpoints
+﻿# ep-9-7: RESTful Endpoints
 
 Implement all resource endpoints following REST conventions with consistent error response shapes so the frontend can depend on a predictable API.
 

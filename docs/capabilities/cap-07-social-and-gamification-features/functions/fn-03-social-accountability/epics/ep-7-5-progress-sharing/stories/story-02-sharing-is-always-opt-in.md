@@ -1,4 +1,4 @@
-# Sharing Is Always Opt-In
+﻿# Sharing Is Always Opt-In
 
 **As a** user, **I can** be certain that no sharing action is ever automated or triggered without my explicit input, **so that** my data and learning activity are never shared without my knowledge.
 

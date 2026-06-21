@@ -1,4 +1,4 @@
-# User Understands Recall Rating Controls Review Timing
+﻿# User Understands Recall Rating Controls Review Timing
 
 **As a** new user, **I can** understand that rating my recall as Easy, Hard, or Forgot controls when I will see that person again, **so that** I treat the rating honestly rather than always picking Easy.
 

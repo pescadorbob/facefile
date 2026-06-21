@@ -1,4 +1,4 @@
-# System Calculates Next Review Date via SM-2
+﻿# System Calculates Next Review Date via SM-2
 
 **As a** system, **I can** compute the next review date for each contact using the SM-2 algorithm after every quiz answer, **so that** reviews are scheduled at the optimal interval for long-term retention.
 

@@ -1,4 +1,4 @@
-# ep-6-5: Real-World Failure Recovery
+﻿# ep-6-5: Real-World Failure Recovery
 
 Let users who blanked on a name in conversation immediately look them up and rebuild the image, turning real-world failure into a repair session.
 

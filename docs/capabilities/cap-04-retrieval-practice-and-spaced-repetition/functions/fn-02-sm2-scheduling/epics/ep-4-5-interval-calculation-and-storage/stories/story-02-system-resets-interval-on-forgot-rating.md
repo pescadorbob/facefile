@@ -1,4 +1,4 @@
-# System Resets Interval on Forgot Rating
+﻿# System Resets Interval on Forgot Rating
 
 **As a** system, **I can** reset a contact's review interval to 1 day when the user rates their recall as "Forgot", **so that** lapsed memories restart from the beginning of the learning curve.
 

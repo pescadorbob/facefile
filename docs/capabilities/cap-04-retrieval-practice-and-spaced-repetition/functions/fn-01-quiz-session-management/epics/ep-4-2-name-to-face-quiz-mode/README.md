@@ -1,4 +1,4 @@
-# ep-4-2: Name → Face Quiz Mode
+﻿# ep-4-2: Name → Face Quiz Mode
 
 Show the user a contact's name and require them to select the correct photo from a set of distractors.
 

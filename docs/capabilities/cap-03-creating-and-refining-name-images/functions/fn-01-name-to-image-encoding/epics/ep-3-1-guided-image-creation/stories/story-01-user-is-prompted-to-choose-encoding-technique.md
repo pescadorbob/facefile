@@ -1,4 +1,4 @@
-# User Is Prompted to Choose Encoding Technique
+﻿# User Is Prompted to Choose Encoding Technique
 
 **As a** user adding a new contact, **I can** be prompted to pick one of three encoding techniques (sound-alike, meaning-based, or syllable split), **so that** I always have a structured starting point rather than a blank field.
 

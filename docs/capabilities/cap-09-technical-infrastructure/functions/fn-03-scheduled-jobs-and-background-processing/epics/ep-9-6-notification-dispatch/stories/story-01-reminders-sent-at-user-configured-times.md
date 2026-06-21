@@ -1,4 +1,4 @@
-# Reminders Sent at User-Configured Times
+﻿# Reminders Sent at User-Configured Times
 
 **As a** system, **I can** dispatch review reminder notifications at each user's individually configured time, **so that** delivery is personalized and not sent at a generic system time.
 

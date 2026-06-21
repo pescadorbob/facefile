@@ -1,4 +1,4 @@
-# User Types Free-Form Name Image Description
+﻿# User Types Free-Form Name Image Description
 
 **As a** user, **I can** type a free-form description of my name image (e.g., "bent beam for Ben"), **so that** my personal encoding is saved with the contact and available during reviews.
 

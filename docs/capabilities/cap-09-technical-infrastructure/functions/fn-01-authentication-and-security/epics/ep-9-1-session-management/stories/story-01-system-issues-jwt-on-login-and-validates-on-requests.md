@@ -1,4 +1,4 @@
-# System Issues JWT on Login and Validates on Requests
+﻿# System Issues JWT on Login and Validates on Requests
 
 **As a** system, **I can** issue a JWT access token on successful login and validate it on every protected API request, **so that** unauthenticated access is rejected before touching any user data.
 

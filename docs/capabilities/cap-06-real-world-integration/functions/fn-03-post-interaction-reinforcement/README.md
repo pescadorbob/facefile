@@ -1,4 +1,4 @@
-# F-6.3: Post-Interaction Reinforcement
+﻿# F-6.3: Post-Interaction Reinforcement
 
 Capture the retrieval attempt that happened in the real world and feed it back into the learning system.
 

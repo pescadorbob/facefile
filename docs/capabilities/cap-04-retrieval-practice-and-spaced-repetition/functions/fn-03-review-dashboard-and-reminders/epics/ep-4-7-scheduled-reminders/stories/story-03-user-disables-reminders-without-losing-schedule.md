@@ -1,4 +1,4 @@
-# User Disables Reminders Without Losing Schedule
+﻿# User Disables Reminders Without Losing Schedule
 
 **As a** user, **I can** turn off all review reminders without affecting my SM-2 schedule, **so that** I can stay in control of my notifications while keeping my review data intact.
 

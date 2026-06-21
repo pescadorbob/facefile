@@ -1,4 +1,4 @@
-# Cron Marks Contacts as Due Hourly
+﻿# Cron Marks Contacts as Due Hourly
 
 **As a** system, **I can** run a cron job hourly that identifies contacts whose `next_review_date` has passed and marks them as due, **so that** the dashboard always reflects the current review queue.
 

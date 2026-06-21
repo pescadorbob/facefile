@@ -1,4 +1,4 @@
-# User Permanently Deletes Account
+﻿# User Permanently Deletes Account
 
 **As a** user, **I can** permanently delete my account and all associated data, **so that** I can fully leave the service with no residual data stored.
 

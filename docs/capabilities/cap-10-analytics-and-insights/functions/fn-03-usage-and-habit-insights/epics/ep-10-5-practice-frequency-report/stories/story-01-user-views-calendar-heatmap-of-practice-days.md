@@ -1,4 +1,4 @@
-# User Views Calendar Heatmap of Practice Days
+﻿# User Views Calendar Heatmap of Practice Days
 
 **As a** user, **I can** see a calendar heatmap showing which days I have practiced over the past year, **so that** I can spot consistency gaps in my habit and identify weeks where I fell off track.
 

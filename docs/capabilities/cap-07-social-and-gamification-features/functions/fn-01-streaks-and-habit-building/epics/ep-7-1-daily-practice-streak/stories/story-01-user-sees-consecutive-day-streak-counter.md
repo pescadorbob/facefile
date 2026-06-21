@@ -1,4 +1,4 @@
-# User Sees Consecutive Day Streak Counter
+﻿# User Sees Consecutive Day Streak Counter
 
 **As a** user, **I can** see a streak counter showing how many consecutive days I've completed at least one review, **so that** daily practice feels tangibly rewarding and worth protecting.
 

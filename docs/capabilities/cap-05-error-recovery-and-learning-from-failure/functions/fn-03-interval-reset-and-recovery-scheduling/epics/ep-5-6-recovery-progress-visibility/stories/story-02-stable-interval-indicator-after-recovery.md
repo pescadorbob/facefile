@@ -1,4 +1,4 @@
-# Stable Interval Indicator After Recovery
+﻿# Stable Interval Indicator After Recovery
 
 **As a** user, **I can** see a visual indicator when a previously lapsed contact reaches a stable review interval (>21 days), **so that** I know the encoding has finally taken and the repair worked.
 

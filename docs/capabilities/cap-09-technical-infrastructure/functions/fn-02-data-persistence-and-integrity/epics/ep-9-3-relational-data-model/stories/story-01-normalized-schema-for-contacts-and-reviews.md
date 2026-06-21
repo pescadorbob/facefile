@@ -1,4 +1,4 @@
-# Normalized Schema for Contacts and Reviews
+﻿# Normalized Schema for Contacts and Reviews
 
 **As a** system, **I can** store contacts, review history, SM-2 parameters, palaces, and locus assignments in a normalized relational schema, **so that** data relationships are consistent and queryable without duplication.
 

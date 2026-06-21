@@ -1,4 +1,4 @@
-# User Is Prompted to Include Motion or Emotion
+﻿# User Is Prompted to Include Motion or Emotion
 
 **As a** user writing an interaction description, **I can** receive a prompt reminding me to include motion or emotion in the scene, **so that** the image is vivid enough to survive retrieval.
 

@@ -1,4 +1,4 @@
-# User Sees Correct Name After Answering
+﻿# User Sees Correct Name After Answering
 
 **As a** user who has submitted an answer in Face → Name mode, **I can** see the correct name confirmed on the reveal screen regardless of whether I was right, **so that** I can self-calibrate even on correct answers.
 

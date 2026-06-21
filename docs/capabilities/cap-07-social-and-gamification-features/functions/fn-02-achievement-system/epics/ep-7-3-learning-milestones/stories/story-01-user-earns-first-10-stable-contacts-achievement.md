@@ -1,4 +1,4 @@
-# User Earns First 10 Stable Contacts Achievement
+﻿# User Earns First 10 Stable Contacts Achievement
 
 **As a** user, **I can** earn an achievement when I reach a stable review interval (>21 days) on my first 10 contacts, **so that** my early learning progress is celebrated with a concrete milestone.
 

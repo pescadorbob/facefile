@@ -1,4 +1,4 @@
-# Queries Scoped to Authenticated User ID
+﻿# Queries Scoped to Authenticated User ID
 
 **As a** system, **I can** scope every database query to the authenticated user's ID, **so that** no user can access or modify another user's contacts, reviews, or palaces.
 

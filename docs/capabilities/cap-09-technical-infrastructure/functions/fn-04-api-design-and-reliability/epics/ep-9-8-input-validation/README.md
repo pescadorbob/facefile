@@ -1,4 +1,4 @@
-# ep-9-8: Input Validation
+﻿# ep-9-8: Input Validation
 
 Validate all incoming request bodies against schemas before processing and return 400 errors with field-level detail so invalid data never reaches the database.
 

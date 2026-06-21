@@ -1,4 +1,4 @@
-# User Earns Monthly Streak Freeze
+﻿# User Earns Monthly Streak Freeze
 
 **As a** user, **I can** earn one streak-freeze grace day per month, **so that** a single missed day doesn't break a long streak I've worked hard to build.
 

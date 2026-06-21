@@ -1,4 +1,4 @@
-# User Is Prompted to Reconstruct, Not Re-Read
+﻿# User Is Prompted to Reconstruct, Not Re-Read
 
 **As a** user who missed a name, **I can** be prompted to actively reconstruct my encoding rather than simply re-reading it, **so that** the recovery attempt is an active learning event.
 

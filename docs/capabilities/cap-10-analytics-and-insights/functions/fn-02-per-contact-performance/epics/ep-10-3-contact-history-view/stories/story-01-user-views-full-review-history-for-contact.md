@@ -1,4 +1,4 @@
-# User Views Full Review History for Contact
+﻿# User Views Full Review History for Contact
 
 **As a** user, **I can** view the complete review history for a specific contact showing dates, ratings, and intervals, **so that** I can see exactly how difficult they've been to learn over time.
 

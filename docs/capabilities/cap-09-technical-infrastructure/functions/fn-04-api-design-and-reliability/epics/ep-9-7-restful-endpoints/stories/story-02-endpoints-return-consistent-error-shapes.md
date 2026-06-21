@@ -1,4 +1,4 @@
-# Endpoints Return Consistent Error Shapes
+﻿# Endpoints Return Consistent Error Shapes
 
 **As a** developer, **I can** rely on all API errors returning a consistent JSON shape with status code, message, and optional field errors, **so that** the frontend can handle failures uniformly without custom logic per endpoint.
 

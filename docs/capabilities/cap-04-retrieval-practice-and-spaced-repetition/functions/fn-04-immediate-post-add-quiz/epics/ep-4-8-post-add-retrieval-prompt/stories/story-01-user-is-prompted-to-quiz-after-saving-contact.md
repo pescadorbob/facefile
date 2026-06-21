@@ -1,4 +1,4 @@
-# User Is Prompted to Quiz After Saving Contact
+﻿# User Is Prompted to Quiz After Saving Contact
 
 **As a** user who has just saved a new contact, **I can** be automatically prompted to answer a one-question quiz about them, **so that** retrieval practice starts within the critical window before the image fades from working memory.
 

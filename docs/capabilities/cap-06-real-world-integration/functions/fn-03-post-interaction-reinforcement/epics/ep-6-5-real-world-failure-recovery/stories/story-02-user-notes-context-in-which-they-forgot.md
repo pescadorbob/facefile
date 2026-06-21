@@ -1,4 +1,4 @@
-# User Notes Context in Which They Forgot
+﻿# User Notes Context in Which They Forgot
 
 **As a** user who blanked on a name in conversation, **I can** note the context in which I forgot (e.g., "saw them out of context", "couldn't see their face clearly"), **so that** I can adjust the encoding to be more context-independent.
 

@@ -1,4 +1,4 @@
-# User Looks Up and Rebuilds Image After Blank
+﻿# User Looks Up and Rebuilds Image After Blank
 
 **As a** user who blanked on a name during a real conversation, **I can** immediately look up the contact and edit their name image, **so that** I turn the real-world failure into an active repair session.
 

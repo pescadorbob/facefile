@@ -1,4 +1,4 @@
-# User Searches by Partial Name or Descriptor
+﻿# User Searches by Partial Name or Descriptor
 
 **As a** user in a real conversation who has drawn a blank, **I can** quickly search for a person by a partial name or a contextual descriptor (e.g., "red hair, marketing"), **so that** I can retrieve their full name discreetly.
 

@@ -1,4 +1,4 @@
-# F-4.2: SM-2 Scheduling
+﻿# F-4.2: SM-2 Scheduling
 
 Use the SM-2 algorithm to compute the next review interval based on the user's self-reported recall quality.
 

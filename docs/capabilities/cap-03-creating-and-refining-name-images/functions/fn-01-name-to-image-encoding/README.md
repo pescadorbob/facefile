@@ -1,4 +1,4 @@
-# F-3.1: Name-to-Image Encoding
+﻿# F-3.1: Name-to-Image Encoding
 
 Help users convert a name into a concrete, imageable cue using sound-alikes, meaning, or syllable splitting.
 

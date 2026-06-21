@@ -1,4 +1,4 @@
-# F-1.1: Memory Palace Education
+﻿# F-1.1: Memory Palace Education
 
 > Capability: [User Onboarding and Learning](../../README.md)
 

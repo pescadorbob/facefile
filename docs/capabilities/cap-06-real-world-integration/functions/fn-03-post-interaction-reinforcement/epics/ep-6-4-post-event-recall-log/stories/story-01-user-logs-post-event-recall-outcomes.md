@@ -1,4 +1,4 @@
-# User Logs Post-Event Recall Outcomes
+﻿# User Logs Post-Event Recall Outcomes
 
 **As a** user after a meeting or event, **I can** log which contacts I remembered and which I forgot, **so that** my real-world performance feeds back into the learning system.
 

@@ -1,4 +1,4 @@
-# ep-1-3: Memory Palace Explainer
+﻿# ep-1-3: Memory Palace Explainer
 
 User understands why spatial and image encoding solves the name memorization problem before they start.
 

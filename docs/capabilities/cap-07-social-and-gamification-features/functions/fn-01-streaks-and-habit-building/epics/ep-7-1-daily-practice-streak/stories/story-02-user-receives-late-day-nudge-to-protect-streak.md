@@ -1,4 +1,4 @@
-# User Receives Late-Day Nudge to Protect Streak
+﻿# User Receives Late-Day Nudge to Protect Streak
 
 **As a** user who hasn't practiced by late afternoon, **I can** receive a gentle in-app nudge reminding me to practice, **so that** my streak is protected and the habit stays consistent.
 

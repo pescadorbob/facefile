@@ -1,4 +1,4 @@
-# ep-7-1: Daily Practice Streak
+﻿# ep-7-1: Daily Practice Streak
 
 Show users a streak counter for consecutive days of practice and send a gentle late-day nudge if they haven't practiced yet.
 

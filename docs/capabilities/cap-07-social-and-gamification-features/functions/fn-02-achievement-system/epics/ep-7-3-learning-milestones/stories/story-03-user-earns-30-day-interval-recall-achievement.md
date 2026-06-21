@@ -1,4 +1,4 @@
-# User Earns 30-Day Interval Recall Achievement
+﻿# User Earns 30-Day Interval Recall Achievement
 
 **As a** user, **I can** earn an achievement for successfully recalling a contact after a 30-day review interval, **so that** long-term retention — the hardest kind — is specifically rewarded.
 

@@ -1,4 +1,4 @@
-# ep-7-6: Challenge a Friend
+﻿# ep-7-6: Challenge a Friend
 
 Let users invite a friend to a 30-day name-learning challenge, seeing only each other's streak and count — never contact names — to preserve privacy.
 

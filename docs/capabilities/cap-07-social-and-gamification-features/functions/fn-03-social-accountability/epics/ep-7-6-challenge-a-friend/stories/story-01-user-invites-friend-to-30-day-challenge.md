@@ -1,4 +1,4 @@
-# User Invites Friend to 30-Day Challenge
+﻿# User Invites Friend to 30-Day Challenge
 
 **As a** user, **I can** invite a friend to a 30-day name-learning challenge, **so that** we create mutual accountability and both build the habit together.
 

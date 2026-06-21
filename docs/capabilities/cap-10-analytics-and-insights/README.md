@@ -1,4 +1,4 @@
-# C-10: Analytics and Insights
+﻿# C-10: Analytics and Insights
 
 Show users how their memory is actually improving over time — and surface what's working versus what needs attention.
 
