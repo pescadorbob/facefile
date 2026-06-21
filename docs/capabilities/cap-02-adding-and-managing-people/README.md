@@ -1,9 +1,10 @@
 # C-2: Adding and Managing People
 
-Give users a fast, frictionless way to capture the people they want to remember — with enough context (face, name, notes, group) to make encoding effective.
+> [Back to capability index](../README.md)
+
+Capture, organize, and manage the people stored across one or more memory palaces.
 
 ## Functions
 
-- [fn-01-contact-creation](./functions/fn-01-contact-creation)
-- [fn-02-contact-organization](./functions/fn-02-contact-organization)
-- [fn-03-contact-editing-and-removal](./functions/fn-03-contact-editing-and-removal)
+- [F-2.1: Person and Palace Management](./functions/fn-01-person-and-palace-management)
+- [F-2.2: Guided Add Person Experience](./functions/fn-02-guided-add-person-experience)
