@@ -19,7 +19,7 @@ export class FacefileBrowserDriver {
   }
 
   async clickAdvanceButton(): Promise<void> {
-    await this.page.getByRole('button', { name: /Next step|Complete tutorial/i }).click();
+    await this.page.getByTestId('advance-btn').click();
   }
 
   async clickAdvanceButtonNTimes(n: number): Promise<void> {
@@ -33,24 +33,22 @@ export class FacefileBrowserDriver {
   }
 
   async expectAdvanceButtonVisible(): Promise<void> {
-    await expect(
-      this.page.getByRole('button', { name: /Next step|Complete tutorial/i }),
-    ).toBeVisible();
+    await expect(this.page.getByTestId('advance-btn')).toBeVisible();
   }
 
   async expectCompletionVisible(): Promise<void> {
     await expect(
-      this.page.getByRole('heading', { name: 'Fundamentals Complete' }),
+      this.page.getByRole('heading', { name: 'The Foundation Is Laid' }),
     ).toBeVisible();
   }
 
   async expectNoCompletionVisible(): Promise<void> {
     await expect(
-      this.page.getByRole('heading', { name: 'Fundamentals Complete' }),
+      this.page.getByRole('heading', { name: 'The Foundation Is Laid' }),
     ).not.toBeVisible();
   }
 
   async expectVisualExampleVisible(): Promise<void> {
-    await expect(this.page.getByText('Visual Example')).toBeVisible();
+    await expect(this.page.getByText(/Fig\. I/i)).toBeVisible();
   }
 }

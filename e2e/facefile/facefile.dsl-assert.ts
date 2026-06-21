@@ -5,8 +5,9 @@ export class FacefileDslAssert {
   constructor(private readonly dsl: FacefileDsl) {}
 
   async seesStep(stepParam: string): Promise<void> {
-    const step = parseParam(stepParam, 'step');
-    await this.dsl.driver.expectStepCounterText(`Step ${step} of 7`);
+    const step = parseInt(parseParam(stepParam, 'step'), 10);
+    const padded = String(step).padStart(2, '0');
+    await this.dsl.driver.expectStepCounterText(`${padded} / 07`);
   }
 
   async seesStepContent(): Promise<void> {
