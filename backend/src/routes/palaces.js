@@ -1,22 +1,21 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+const palaceRepository = require('../repositories/palaceRepository');
+const { createPalaceService } = require('../services/palaceService');
 
 const router = express.Router();
-const prisma = new PrismaClient();
 const DEFAULT_USER_ID = 1;
+const palaceService = createPalaceService(palaceRepository);
+
+function handleError(res, err) {
+  res.status(err.status ?? 500).json({ error: err.message });
+}
 
 router.get('/', async (req, res) => {
   try {
-    const palaces = await prisma.palace.findMany({
-      where: { userId: DEFAULT_USER_ID },
-      orderBy: { id: 'asc' },
-      include: {
-        loci: { orderBy: { position: 'asc' } },
-      },
-    });
+    const palaces = await palaceService.listForUser(DEFAULT_USER_ID);
     res.json(palaces);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    handleError(res, err);
   }
 });
 

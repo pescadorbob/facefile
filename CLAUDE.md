@@ -122,6 +122,7 @@ Detailed guidance for specific workflows lives in `.claude/` to keep this file f
 | [`.claude/skills/plan-work.md`](.claude/skills/plan-work.md) | Planning or scoping work: Capability → Function → Epic → Story hierarchy, story rules, ordering |
 | [`.claude/skills/write-ac.md`](.claude/skills/write-ac.md) | Writing or reviewing acceptance criteria for story files under `docs/capabilities/` |
 | [`.claude/skills/write-specs.md`](.claude/skills/write-specs.md) | Generating executable specifications from story ACs (DSL/driver/SUT architecture) |
+| [`.claude/skills/ports-and-adapters.md`](.claude/skills/ports-and-adapters.md) | Refactoring a route handler into route (HTTP) + service (business) + repository (Prisma) layers |
 
 ### Prompt snippets (reference material)
 
