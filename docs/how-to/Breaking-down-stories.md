@@ -1,5 +1,22 @@
 # Acceptance Test Driven Design
 
+## Contents
+
+- [From Goals to running software with executable specifications and living documentation](#from-goals-to-running-software-with-executable-specifications-and-living-documentation)
+- [Starting point: Product Vision](#starting-point-product-vision)
+- [Event Storming & Story Mapping](#event-storming-and-story-mapping)
+- [User stories & use cases](#user-stories--use-cases)
+- [Acceptance Criteria: Illustrate with key examples](#acceptance-criteria-illustrate-with-key-examples)
+- [Good Examples](#good-examples)
+- [Specification with examples](#specification-with-examples)
+- [Refine to a table](#refine-to-a-table-)
+- [Executable specification](#executable-specification)
+- [Living documentation](#living-documentation)
+- [Creating documentation from your executable specifications](#creating-documentation-from-your-executable-specifications)
+- [Successful practices](#successful-practices)
+
+---
+
 ATDD leverages Specification by Example to develop a product owner's product vision into working software with living documentation. In this document we'll approach everything you need to know to accomplish this goal.
 
 ## From Goals to running software with executable specifications and living documentation
@@ -46,12 +63,22 @@ The "unlike" line is your differentiation — not a feature dump. Pick the 2-3 t
 
 Take a moment to consider write the product vision that everyone agrees on. Create a readme doc in your project called "vision.md" and write down what you think the goal of this product is. It should be concise and business oriented, not technical. Share your 'Goal' with your instructor and ask them how well it aligns with their vision or wish for the product focused around the slice you are working in.
 
+## Event Storming and Story Mapping
+
 Now that you have a clear vision of what the product is, it's time to break it down into capabilities, features, epics and stories.
 
 - Start with [event-storming](event-storming.md) to flesh out the broad strokes of your system
 - Use [Story Mapping ](story-mapping.md) to organize your stories into capabilities, features, epics and stories
 
 ## User stories & use cases
+
+Now that you've got a 'walking skeleton' of your system, it's time to write out the user stories.
+
+For every story that you have, write out the main user, and their goal. 
+
+You could use: In order to [benefit], As [role], I want [action].
+
+Here are some examples: 
 
 User stories for a basic loyalty system:
 
