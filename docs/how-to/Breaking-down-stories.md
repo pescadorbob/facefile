@@ -2,16 +2,6 @@
 
 ATDD leverages Specification by Example to develop a product owner's product vision into working software with living documentation. In this document we'll approach everything you need to know to accomplish this goal.
 
-## Specification by Example
-
-"SBE is a collaborative approach to defining requirements and business-oriented functional tests, for software products based on capturing and illustrating requirements using realistic examples instead of abstract statements." — Wikipedia
-
-The key goal of the Technical Excellence program is to delivery better software faster with fewer bugs. Bugs can enter into the stream at any point, especially in the requirements development phase.
-
-Specification by example will describe how to create better requirements, that are more clearly focused on the value of our system to its users, rather than the technicalities of how we achieve that value.
-
-This liberates us to create clearer, more useful descriptions of what our goals are, and helps us, by making these not only clearer to everyone, but also tools that we can use to actively drive the development process and confirm that our systems do what our users need them to.
-
 ## From Goals to running software with executable specifications and living documentation
 
 You will learn more technical techniques that make it easy to write specifications like these that don't change as the system that you are building evolves and changes over time. These are true specifications that tell us what to build, but also act as excellent, extensive, regression tests, validating our systems, and allowing us to proceed quickly and with confidence.
@@ -25,14 +15,41 @@ Through a mix of theory and worked examples, this will demonstrate the practices
 - To practice effective story-writing using a combination of "Story Mapping" and "Specification by Example" techniques.
 - To learn how to create and use a "Domain Specific Language" to support the creation and maintenance of "Executable Specifications".
 
-## Starting point: Business Goal
+## Starting point: Product Vision
 
-If you are already working on an existing project that's in production, you likely already have a good idea of what the business goal is for the slice of architecture you have selected to transform. Even so, take a moment to consider what it is. Create a readme doc in your project called "specification.md" and write down what you think the goal of this slice of architecture is. It should be concise and business oriented, not technical. Share your 'Goal' with your product owner and ask them how well it aligns with their vision or wish for the product focused around the slice you are working in.
+Elevator Pitch Builder Prompt
+Instructions: Answer each blank in plain language — no jargon, no internal acronyms, no implementation details. If you can't fill a blank in one simple sentence, the idea isn't clear enough yet.
+For [specific target user or customer]
 
-If you are working forward, this would usually be done with story-mapping or event storming, but we'll not delve into that too much.
+Who [has this problem / need / pain point]
 
-**An example of a good business goal:**
-- Increase repeat sales to existing customers by 50% over the next 12 months
+Our widget/product/service is a [category — what kind of thing it is]
+
+That [core value it delivers — the outcome the user actually cares about]
+
+Unlike [the current alternative(s) — competitors, status quo, or manual workaround]
+
+Our widget [does X, Y, and Z differently — the 2-3 things that actually matter to the user]
+
+Example (filled in)
+
+For small restaurant owners who struggle to track inventory and predict food waste, FreshTrack is a simple inventory app that shows exactly what to order and when, cutting food waste costs. Unlike spreadsheets or gut-feel ordering, FreshTrack automatically forecasts demand, alerts you before items expire, and syncs with your POS — no manual data entry required.
+
+
+Guardrails while filling this in:
+
+One sentence, one breath. If you need to pause to explain a term, cut it.
+Value before features. Say what the user gets (less waste, more time, more revenue) before how it works.
+Test it on the least technical person in the room. If they can repeat it back accurately after hearing it once, it's ready.
+The "unlike" line is your differentiation — not a feature dump. Pick the 2-3 things that actually change the user's life, not everything the product does.
+
+
+Take a moment to consider write the product vision that everyone agrees on. Create a readme doc in your project called "vision.md" and write down what you think the goal of this product is. It should be concise and business oriented, not technical. Share your 'Goal' with your instructor and ask them how well it aligns with their vision or wish for the product focused around the slice you are working in.
+
+Now that you have a clear vision of what the product is, it's time to break it down into capabilities, features, epics and stories.
+
+- Start with [event-storming](event-storming.md) to flesh out the broad strokes of your system
+- Use [Story Mapping ](story-mapping.md) to organize your stories into capabilities, features, epics and stories
 
 ## User stories & use cases
 
@@ -60,7 +77,7 @@ In this exercise, we'll now take this abstract use case and illustrate our under
 - VIP customer with a five washing machines in the cart doesn't get free delivery.
 - VIP customer with five books and a washing machine in the cart doesn't get free delivery.
 
-*— Specification by example (Gojko Adzic)*
+_— Specification by example (Gojko Adzic)_
 
 These key examples help clarify the product owner's vision of the system and understand when the development of the system for this scope has completed.
 
@@ -82,7 +99,7 @@ Now that we have the key examples or acceptance criteria, we want to define the 
 
 We refine the specification from the key examples and create a document that's self-explanatory and formatted in a way that will make it easy to automate the validation later (shown below). You may find yourself going between the key examples (making them more concise, removing duplicates) and the specification with examples. Although not required, many people find using the language of **"Given, When Then"** to be helpful.
 
-Every acceptance criterion may have one or more scenarios tied to it. All the scenarios put together become your *executable specifications*.
+Every acceptance criterion may have one or more scenarios tied to it. All the scenarios put together become your _executable specifications_.
 
 ### Example scenarios from key examples:
 
@@ -94,9 +111,9 @@ Then your scenario could read:
 
 Scenario: Free delivery VIP customer with five books in the cart gets free delivery.
 
-- *GIVEN* customer is VIP
-- *WHEN* cart contains 5 books
-- *THEN* delivery is free
+- _GIVEN_ customer is VIP
+- _WHEN_ cart contains 5 books
+- _THEN_ delivery is free
 
 You pick another acceptance criteria:
 
@@ -104,31 +121,31 @@ You pick another acceptance criteria:
 
 Scenario: VIP customer with four books in the cart doesn't get free delivery.
 
-- *GIVEN* customer is VIP
-- *WHEN* cart contains 4 books
-- *THEN* delivery is standard
+- _GIVEN_ customer is VIP
+- _WHEN_ cart contains 4 books
+- _THEN_ delivery is standard
 
 And yet a third:
 
 Scenario: Regular customer with five books in the cart doesn't get free delivery.
 
-- *GIVEN* customer is Regular
-- *WHEN* cart contains 5 books
-- *THEN* delivery is standard
+- _GIVEN_ customer is Regular
+- _WHEN_ cart contains 5 books
+- _THEN_ delivery is standard
 
 and so on.
 
 Scenario: VIP customer with a five washing machines in the cart doesn't get free delivery.
 
-- *GIVEN* customer is VIP
-- *WHEN* cart contains 5 washing machines
-- *THEN* delivery is standard
+- _GIVEN_ customer is VIP
+- _WHEN_ cart contains 5 washing machines
+- _THEN_ delivery is standard
 
 Scenario: VIP customer with five books and a washing machine in the cart doesn't get free delivery.
 
-- *GIVEN* customer is VIP
-- *WHEN* cart contains 5 books and 5 washing machines
-- *THEN* delivery is standard
+- _GIVEN_ customer is VIP
+- _WHEN_ cart contains 5 books and 5 washing machines
+- _THEN_ delivery is standard
 
 After considering all the scenarios, you notice a pattern and think about how easy it would be to combine these together, if they really are similar enough.
 
@@ -144,19 +161,19 @@ Free delivery is not offered to regular customers or VIP customers buying anythi
 
 Given that the minimum number of books to get free delivery is five, then we expect the following:
 
-- Given customer is *\<\<customer type>>*
-- When cart contains *\<\<cart contents>>*
-- Then delivery is *\<\<delivery>>*
+- Given customer is _\<\<customer type>>_
+- When cart contains _\<\<cart contents>>_
+- Then delivery is _\<\<delivery>>_
 
-| Customer type | Cart contents | Delivery |
-|---|---|---|
-| VIP | 5 books | Free, Standard |
-| VIP | 4 books | Standard |
-| Regular | 10 books | Standard |
-| VIP | 5 washing machines | Standard |
-| VIP | 5 books, 1 washing machine | Standard |
+| Customer type | Cart contents              | Delivery       |
+| ------------- | -------------------------- | -------------- |
+| VIP           | 5 books                    | Free, Standard |
+| VIP           | 4 books                    | Standard       |
+| Regular       | 10 books                   | Standard       |
+| VIP           | 5 washing machines         | Standard       |
+| VIP           | 5 books, 1 washing machine | Standard       |
 
-*-- Specification with examples (Gojko Adzic)*
+_-- Specification with examples (Gojko Adzic)_
 
 Now armed with your scenarios and/or scenario outlines, you are ready to turn these into executable specifications.
 
@@ -165,7 +182,7 @@ Keep these 4 elements in mind. If you proceed past this point, without scenarios
 The description should be:
 
 - **Concise** - So that they are quick and easy to create.
-- **Accurate** - so that they specify *something specific* that we can evaluate for correctness
+- **Accurate** - so that they specify _something specific_ that we can evaluate for correctness
 - **Understandable** - so that everyone can understand the intent of the test, and so understand what the system is meant to do.
 - **Durable** - robust in the face of change, so that they act as a defense against mistakes when we need to change things.
 
@@ -175,7 +192,7 @@ If your specifications and scenarios pass those qualifiers, it's now time to mak
 
 When our developers start working on the feature described in the specification with the example created above, the test based on this specification will initially fail because it's not yet automated and the feature isn't yet implemented. The developers will implement the relevant feature and connect it to the test automation framework. They'll use a test automation framework which pulls the inputs from the specification and validates the expected outputs without requiring them to actually change the specification document. This could be plain old java with JUnit, or something like Gherkin and Cucumber. It is up to the team implementing. I personally prefer plain old java, but teams may choose whatever they find the most expressive.
 
-*A full working example can be seen here.*
+_A full working example can be seen here._
 
 Ideas and practices such as the following will help automate the specification efficiently:
 
@@ -193,7 +210,7 @@ Ideas and practices such as the following will help automate the specification e
 
 ### 4 layer architecture [3]
 
-*(Diagram: Test Cases sit at the top, feeding down into a Domain Specific Language layer. The DSL layer feeds down into a set of drivers — UI Protocol Driver, REST Protocol Driver, and two Stub Drivers. Those drivers connect down into the System Under Test, which in turn connects to External System Stubs.)*
+_(Diagram: Test Cases sit at the top, feeding down into a Domain Specific Language layer. The DSL layer feeds down into a set of drivers — UI Protocol Driver, REST Protocol Driver, and two Stub Drivers. Those drivers connect down into the System Under Test, which in turn connects to External System Stubs.)_
 
 You started with a specification that could be applied manually with validations. But once the validation is automated, the specification becomes executable!
 
@@ -208,7 +225,7 @@ Both models aim to prevent functional regression through test automation, but th
 
 Using your ATDD results as documentation flips one of the Agile Manifesto's principles on its head:
 
-*-- **Working software over** comprehensive documentation*
+_-- **Working software over** comprehensive documentation_
 
 This approach ties your documentation to your working software. Your documentation will always describe accurately what the working software does. They are always consistent. Your working software **produces** comprehensive documentation that can be trusted.
 
@@ -261,7 +278,7 @@ There are many who preferred to use cucumber and gherkin. Cucumber is able to pr
 
 www.relishapp.com
 
-*(Screenshot of a Relish documentation page showing a test case named "Sucker" with an accompanying illustration.)*
+_(Screenshot of a Relish documentation page showing a test case named "Sucker" with an accompanying illustration.)_
 
 ### Pitfalls to avoid
 
@@ -300,7 +317,7 @@ Positive practices:
 - Organize current work by stories
 - Reorganize stories by functional areas
 
-*(Diagram: A hierarchical map rooted at "Homepage," branching out into feature areas such as Payments, Card processing, User management, Reporting, Current iteration, and Known regression issues — each with sub-nodes like MasterCard, Visa, Verified by Visa, Authorization, Refunds, New registrations, Registration, Story #729: Enhanced registration, Email integration, Age verification, Payout transfer, and BO user report.)*
+_(Diagram: A hierarchical map rooted at "Homepage," branching out into feature areas such as Payments, Card processing, User management, Reporting, Current iteration, and Known regression issues — each with sub-nodes like MasterCard, Visa, Verified by Visa, Authorization, Refunds, New registrations, Registration, Story #729: Enhanced registration, Email integration, Age verification, Payout transfer, and BO user report.)_
 
 - Pay attention to it... **listen** to your living documentation and the people who read it.
   - Use the same language in your executable specification as your ubiquitous language and domain models.
