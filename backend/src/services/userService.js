@@ -12,8 +12,9 @@ function conflict(message) {
 
 function createUserService(repository) {
   return {
-    async listAll() {
-      return repository.findAll();
+    async listAll({ status } = {}) {
+      if (status === undefined) return repository.findAll();
+      return repository.findAll({ active: status === 'active' });
     },
 
     async getOrThrow(id) {

@@ -103,6 +103,42 @@ export class FacefileDslAssert {
   async seesDuplicateEmailErrorOnUserForm(): Promise<void> {
     await this.dsl.driver.expectUserFormErrorContains('already in use');
   }
+
+  // ── Session & profile selection ─────────────────────────────────────────────
+
+  async seesProfilePicker(): Promise<void> {
+    await this.dsl.driver.expectOnSelectProfilePage();
+  }
+
+  async isRedirectedToProfilePicker(): Promise<void> {
+    await this.dsl.driver.expectOnSelectProfilePage();
+  }
+
+  async landsOnDashboard(): Promise<void> {
+    await this.dsl.driver.expectLandedOnHomePage();
+  }
+
+  async seesProfileInPicker(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectProfileTileVisible(name);
+  }
+
+  async doesNotSeeProfileInPicker(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectProfileTileNotVisible(name);
+  }
+
+  async seesRememberMeOption(): Promise<void> {
+    await this.dsl.driver.expectRememberMeOptionVisible();
+  }
+
+  async sessionCookieIsPersistent(): Promise<void> {
+    await this.dsl.driver.expectSessionCookiePersistent();
+  }
+
+  async sessionCookieIsBrowserScoped(): Promise<void> {
+    await this.dsl.driver.expectSessionCookieIsBrowserScoped();
+  }
 }
 
 export function confirmThat(facefile: FacefileDsl): FacefileDslAssert {

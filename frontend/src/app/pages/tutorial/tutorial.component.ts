@@ -1,5 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { TutorialService } from '../../services/tutorial.service';
+import { SessionService } from '../../services/session.service';
 
 interface TutorialStep {
   number: number;
@@ -184,6 +186,12 @@ const STEPS: TutorialStep[] = [
         <header class="sticky top-0 z-20 border-b px-5 flex items-center justify-between"
           style="background:var(--tut-card);border-color:var(--tut-border);height:52px;min-height:52px">
           <span style="font-family:'Playfair Display',serif;font-size:16px;color:var(--tut-fg)">The Memory Palace</span>
+          <button
+            (click)="switchProfile()"
+            style="background:none;border:none;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--tut-muted)"
+          >
+            Switch profile
+          </button>
           <button
             (click)="menuOpen.set(!menuOpen())"
             class="flex items-center gap-2"
@@ -391,6 +399,8 @@ const STEPS: TutorialStep[] = [
 })
 export class TutorialComponent implements OnInit {
   private tutorialService = inject(TutorialService);
+  private sessionService = inject(SessionService);
+  private router = inject(Router);
 
   readonly steps = STEPS;
   readonly currentStep = signal(1);
@@ -416,6 +426,13 @@ export class TutorialComponent implements OnInit {
 
   padStep(n: number): string {
     return String(n).padStart(2, '0');
+  }
+
+  switchProfile() {
+    this.sessionService.switchProfile().subscribe({
+      next: () => this.router.navigate(['/select-profile']),
+      error: () => this.router.navigate(['/select-profile']),
+    });
   }
 
   ngOnInit() {

@@ -11,7 +11,7 @@ function handleError(res, err) {
 
 router.get('/', async (req, res) => {
   try {
-    const users = await userService.listAll();
+    const users = await userService.listAll({ status: req.query.status });
     res.json(users);
   } catch (err) {
     handleError(res, err);

@@ -12,7 +12,7 @@ function handleError(res, err) {
 
 router.get('/', async (req, res) => {
   try {
-    const palaces = await palaceService.listForUser(DEFAULT_USER_ID);
+    const palaces = await palaceService.listForUser(req.userId ?? DEFAULT_USER_ID);
     res.json(palaces);
   } catch (err) {
     handleError(res, err);

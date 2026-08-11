@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 const DEFAULT_USER_ID = 1;
 
 router.post('/', upload.single('photo'), async (req, res) => {
+  const userId = req.userId ?? DEFAULT_USER_ID;
   const { name, palaceId, locusId, nameImage, associationScene, notes } = req.body;
 
   if (!name || !name.trim()) {
@@ -16,7 +17,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
   try {
     const contact = await prisma.contact.create({
       data: {
-        userId: DEFAULT_USER_ID,
+        userId,
         name: name.trim(),
         notes: notes || null,
         photoPath: req.file ? `/uploads/${req.file.filename}` : null,
@@ -35,10 +36,11 @@ router.post('/', upload.single('photo'), async (req, res) => {
 });
 
 router.delete('/', async (req, res) => {
+  const userId = req.userId ?? DEFAULT_USER_ID;
   try {
-    await prisma.quizResult.deleteMany({ where: { contact: { userId: DEFAULT_USER_ID } } });
-    await prisma.reviewCard.deleteMany({ where: { contact: { userId: DEFAULT_USER_ID } } });
-    await prisma.contact.deleteMany({ where: { userId: DEFAULT_USER_ID } });
+    await prisma.quizResult.deleteMany({ where: { contact: { userId } } });
+    await prisma.reviewCard.deleteMany({ where: { contact: { userId } } });
+    await prisma.contact.deleteMany({ where: { userId } });
     res.status(204).end();
   } catch (err) {
     res.status(500).json({ error: err.message });

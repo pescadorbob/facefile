@@ -29,6 +29,10 @@ export class AdminUsersService {
     return this.http.get<AdminUser[]>('/api/admin/users');
   }
 
+  listActive(): Observable<AdminUser[]> {
+    return this.http.get<AdminUser[]>('/api/admin/users', { params: { status: 'active' } });
+  }
+
   create(payload: CreateUserPayload): Observable<AdminUser> {
     return this.http.post<AdminUser>('/api/admin/users', payload);
   }

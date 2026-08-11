@@ -172,4 +172,44 @@ export class FacefileDsl {
     await this.driver.reactivateUserByEmail(email);
     await this.driver.navigateToAdminUsers();
   }
+
+  // ── Session & profile selection ─────────────────────────────────────────────
+
+  async opensSelectProfile(): Promise<void> {
+    await this.driver.navigateToSelectProfile();
+  }
+
+  async attemptsToOpenProtectedPageWithoutSession(): Promise<void> {
+    await this.driver.navigateToProtectedPageWithoutSession();
+  }
+
+  async refreshesPage(): Promise<void> {
+    await this.driver.reloadPage();
+  }
+
+  async registersActiveUser(nameParam: string, emailParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    const email = this.ctx.aliasEmail(parseParam(emailParam, 'email'));
+    await this.driver.createActiveUserViaApi(name, email);
+    this.driver.trackCreatedUserEmail(email);
+  }
+
+  async selectsProfile(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.clickProfileTile(name);
+  }
+
+  async selectsProfileWithRememberMe(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.checkRememberMeOnPicker();
+    await this.driver.clickProfileTile(name);
+  }
+
+  async activatesSwitchProfile(): Promise<void> {
+    await this.driver.clickSwitchProfile();
+  }
+
+  async tampersWithSessionCookie(): Promise<void> {
+    await this.driver.setTamperedSessionCookie();
+  }
 }

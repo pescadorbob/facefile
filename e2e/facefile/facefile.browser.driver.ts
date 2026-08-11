@@ -4,14 +4,32 @@ const BACKEND_URL = 'http://localhost:3001';
 
 export class FacefileBrowserDriver {
   private readonly createdUserEmails = new Set<string>();
+  private sessionEstablished = false;
 
   constructor(
     private readonly page: Page,
     private readonly request: APIRequestContext,
   ) {}
 
+  /**
+   * Every protected route now requires a session. Existing specs never establish one
+   * explicitly (that predates this feature), so each of their navigation methods
+   * establishes a default session as a side effect — via page.request, which (unlike
+   * the standalone `request` fixture) shares the page's cookie jar. Memoized per test.
+   */
+  private async ensureAuthenticatedSession(): Promise<void> {
+    if (this.sessionEstablished) return;
+    await this.page.request.post(`${BACKEND_URL}/api/session`, { data: { userId: 1 } });
+    this.sessionEstablished = true;
+  }
+
   async navigateToTutorial(): Promise<void> {
+    await this.ensureAuthenticatedSession();
     await this.page.goto('/tutorial');
+  }
+
+  async reloadPage(): Promise<void> {
+    await this.page.reload();
   }
 
   async resetTutorialProgress(): Promise<void> {
@@ -57,6 +75,7 @@ export class FacefileBrowserDriver {
   // ── Guided wizard ──────────────────────────────────────────────────────────
 
   async navigateToAddPerson(): Promise<void> {
+    await this.ensureAuthenticatedSession();
     await this.page.goto('/persons/new');
   }
 
@@ -126,6 +145,7 @@ export class FacefileBrowserDriver {
   // ── Admin: user management ──────────────────────────────────────────────────
 
   async navigateToAdminUsers(): Promise<void> {
+    await this.ensureAuthenticatedSession();
     await this.page.goto('/admin/users');
   }
 
@@ -227,5 +247,81 @@ export class FacefileBrowserDriver {
     const res = await this.request.get(`${BACKEND_URL}/api/admin/users`);
     const users = await res.json();
     return users.find((u: { id: number; name: string; email: string }) => u.email === email);
+  }
+
+  // ── Session & profile selection ─────────────────────────────────────────────
+
+  /** Deliberately does NOT establish a session first — this route doesn't require one. */
+  async navigateToSelectProfile(): Promise<void> {
+    await this.page.goto('/select-profile');
+  }
+
+  /** Deliberately does NOT establish a session first — used to exercise the guard's redirect. */
+  async navigateToProtectedPageWithoutSession(): Promise<void> {
+    await this.page.goto('/tutorial');
+  }
+
+  async createActiveUserViaApi(name: string, email: string): Promise<void> {
+    await this.request.post(`${BACKEND_URL}/api/admin/users`, { data: { name, email } });
+  }
+
+  async clickProfileTile(name: string): Promise<void> {
+    await this.page.getByRole('button', { name }).click();
+  }
+
+  async checkRememberMeOnPicker(): Promise<void> {
+    await this.page.getByLabel(/Remember me/i).check();
+  }
+
+  async clickSwitchProfile(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Switch profile' }).click();
+  }
+
+  /** Sets a bogus value under the session cookie's name — not a validly-signed cookie. */
+  async setTamperedSessionCookie(): Promise<void> {
+    await this.page.context().addCookies([
+      { name: 'facefile_user_id', value: 'garbage-tampered-value', url: 'http://localhost:4200' },
+    ]);
+  }
+
+  async expectOnSelectProfilePage(): Promise<void> {
+    await this.page.waitForURL(/\/select-profile/);
+  }
+
+  async expectLandedOnHomePage(): Promise<void> {
+    await this.page.waitForURL(/\/tutorial/);
+  }
+
+  async expectProfileTileVisible(name: string): Promise<void> {
+    await expect(this.page.getByRole('button', { name })).toBeVisible();
+  }
+
+  async expectProfileTileNotVisible(name: string): Promise<void> {
+    await expect(this.page.getByRole('button', { name })).toHaveCount(0);
+  }
+
+  async expectRememberMeOptionVisible(): Promise<void> {
+    await expect(this.page.getByLabel(/Remember me/i)).toBeVisible();
+  }
+
+  /**
+   * Rather than literally closing/reopening a browser context (fragile, and Playwright
+   * has no clean mid-test way to swap the page under a running test), these two check the
+   * cookie attribute that is the entire mechanism by which a real restart would or
+   * wouldn't preserve the session: a Max-Age in the future vs. a browser-session-scoped
+   * cookie (expires: -1 is Playwright's representation of "no Max-Age/Expires set").
+   */
+  async expectSessionCookiePersistent(): Promise<void> {
+    const cookies = await this.page.context().cookies();
+    const sessionCookie = cookies.find(c => c.name === 'facefile_user_id');
+    expect(sessionCookie).toBeTruthy();
+    expect(sessionCookie!.expires).toBeGreaterThan(0);
+  }
+
+  async expectSessionCookieIsBrowserScoped(): Promise<void> {
+    const cookies = await this.page.context().cookies();
+    const sessionCookie = cookies.find(c => c.name === 'facefile_user_id');
+    expect(sessionCookie).toBeTruthy();
+    expect(sessionCookie!.expires).toBe(-1);
   }
 }

@@ -16,8 +16,6 @@ test.describe('S-8.3.5 Admin Reactivates a Previously Deactivated User Account',
   });
 
   test('reactivated account can sign in again', async ({ facefile }) => {
-    test.skip(true, 'No sign-in / profile-picker flow exists yet (E-1.7 is specced but not implemented) — nothing to drive here.');
-
     // GIVEN a user account has just been reactivated
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera9@example.com');
@@ -25,7 +23,11 @@ test.describe('S-8.3.5 Admin Reactivates a Previously Deactivated User Account',
     await facefile.reactivatesUser('name: Sam Rivera');
 
     // WHEN Sam Rivera attempts to select their profile
-    // THEN access is granted
+    await facefile.opensSelectProfile();
+    await facefile.selectsProfile('name: Sam Rivera');
+
+    // THEN access is granted — the user lands on their dashboard
+    await confirmThat(facefile).landsOnDashboard();
   });
 
   test('active status is reflected in the account list', async ({ facefile }) => {

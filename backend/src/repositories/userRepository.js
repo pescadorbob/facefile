@@ -13,15 +13,16 @@ const USER_FIELDS = {
 
 /**
  * @typedef {Object} UserRepository
- * @property {() => Promise<User[]>} findAll
+ * @property {(filter?: {active?: boolean}) => Promise<User[]>} findAll
  * @property {(id: number) => Promise<User|null>} findById
  * @property {(email: string) => Promise<User|null>} findByEmail
  * @property {(data: object) => Promise<User>} create
  * @property {(id: number, data: object) => Promise<User>} update
  */
 const userRepository = {
-  findAll() {
+  findAll(filter = {}) {
     return prisma.user.findMany({
+      where: filter.active !== undefined ? { active: filter.active } : {},
       orderBy: { id: 'asc' },
       select: USER_FIELDS,
     });
