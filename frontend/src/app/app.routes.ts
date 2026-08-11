@@ -16,5 +16,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/quiz/quiz.component').then((m) => m.QuizComponent),
   },
+  {
+    path: 'admin/users',
+    loadComponent: () =>
+      import('./pages/admin/users/admin-users.component').then((m) => m.AdminUsersComponent),
+  },
   { path: '', redirectTo: 'tutorial', pathMatch: 'full' },
 ];

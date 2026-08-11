@@ -63,6 +63,46 @@ export class FacefileDslAssert {
     const image = parseParam(imageParam, 'image');
     await this.dsl.driver.expectWizardNameImageFieldContains(image);
   }
+
+  // ── Admin: user management ──────────────────────────────────────────────────
+
+  async seesUserInList(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectUserRowVisible(name);
+  }
+
+  async doesNotSeeUserInList(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectUserRowNotVisible(name);
+  }
+
+  async seesUserWithEmail(nameParam: string, emailParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    const email = this.dsl.ctx.aliasEmail(parseParam(emailParam, 'email'));
+    await this.dsl.driver.expectUserRowContainsEmail(name, email);
+  }
+
+  async seesUserStatus(nameParam: string, statusParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    const status = parseParam(statusParam, 'status');
+    await this.dsl.driver.expectUserRowStatus(name, status);
+  }
+
+  async seesEmptyUsersListMessage(): Promise<void> {
+    await this.dsl.driver.expectEmptyUsersListMessage();
+  }
+
+  async seesNameRequiredErrorOnUserForm(): Promise<void> {
+    await this.dsl.driver.expectUserFormError('A name is required.');
+  }
+
+  async seesEmailRequiredErrorOnUserForm(): Promise<void> {
+    await this.dsl.driver.expectUserFormError('An email address is required.');
+  }
+
+  async seesDuplicateEmailErrorOnUserForm(): Promise<void> {
+    await this.dsl.driver.expectUserFormErrorContains('already in use');
+  }
 }
 
 export function confirmThat(facefile: FacefileDsl): FacefileDslAssert {

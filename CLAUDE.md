@@ -17,6 +17,7 @@ backend/ (Express 5, port 3001)
 ```
 
 **Core data flow for quizzing:**
+
 1. `Contact` is created → a `ReviewCard` is automatically created with SM-2 defaults
 2. `GET /api/quiz/due` returns cards where `ReviewCard.nextReviewAt <= now`
 3. User submits a rating (1/3/5) → `POST /api/quiz/answer` runs `sm2()` and updates the `ReviewCard`
@@ -27,6 +28,7 @@ backend/ (Express 5, port 3001)
 ## Dev Commands
 
 ### Backend
+
 ```bash
 cd backend
 npm run dev          # nodemon watch mode → http://localhost:3001
@@ -36,6 +38,7 @@ npm run db:studio    # open Prisma Studio GUI
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 ng serve                                       # dev server → http://localhost:4200
@@ -51,6 +54,7 @@ ng test --include="**/app.component.spec.ts"  # single spec file
 **This application has no working authorization.** Although JWT infrastructure exists (`AuthService`, `authInterceptor`, `authGuard`, `POST /api/auth/login`, `POST /api/auth/signup`), **every backend route ignores the token and operates against a hardcoded `DEFAULT_USER_ID = 1`.**
 
 Practical consequences:
+
 - The auth interceptor exists in the frontend but the backend routes do **not** use `authMiddleware` — `req.userId` is never read.
 - All contacts, quiz cards, quiz results, and tutorial progress belong to user 1 regardless of who is "logged in."
 - There is no per-user data isolation today.
@@ -102,6 +106,7 @@ User ——— UserMicrosoftConnection  (optional MS Graph integration)
 ## Environment Setup
 
 Backend requires a `.env` file (copy from `.env.example`):
+
 - `DATABASE_URL` — path to the SQLite file (e.g., `file:./prisma/dev.db`)
 - `JWT_SECRET` — secret for 15-min access tokens
 - `JWT_REFRESH_SECRET` — secret for 7-day refresh tokens
@@ -117,16 +122,16 @@ Detailed guidance for specific workflows lives in `.claude/` to keep this file f
 
 ### Skills (read when the task matches)
 
-| File | When to apply |
-|---|---|
-| [`.claude/skills/plan-work.md`](.claude/skills/plan-work.md) | Planning or scoping work: Capability → Function → Epic → Story hierarchy, story rules, ordering |
-| [`.claude/skills/write-ac.md`](.claude/skills/write-ac.md) | Writing or reviewing acceptance criteria for story files under `docs/capabilities/` |
-| [`.claude/skills/write-specs.md`](.claude/skills/write-specs.md) | Generating executable specifications from story ACs (DSL/driver/SUT architecture) |
-| [`.claude/skills/ports-and-adapters.md`](.claude/skills/ports-and-adapters.md) | Refactoring a route handler into route (HTTP) + service (business) + repository (Prisma) layers |
+| File                                                                            | When to apply                                                                                      |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| [`.claude/skills/plan-work.md`](.claude/skills/plan-work.md)                   | Planning or scoping work: Capability → Function → Epic → Story hierarchy, story rules, ordering |
+| [`.claude/skills/write-ac.md`](.claude/skills/write-ac.md)                     | Writing or reviewing acceptance criteria for story files under`docs/capabilities/`               |
+| [`.claude/skills/write-specs.md`](.claude/skills/write-specs.md)               | Generating executable specifications from story ACs (DSL/driver/SUT architecture)                  |
+| [`.claude/skills/ports-and-adapters.md`](.claude/skills/ports-and-adapters.md) | Refactoring a route handler into route (HTTP) + service (business) + repository (Prisma) layers    |
 
 ### Prompt snippets (reference material)
 
-| File | Contents |
-|---|---|
+| File                                                                                        | Contents                                                                                                                        |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | [`.claude/prompt-snippets/e2e-conventions.md`](.claude/prompt-snippets/e2e-conventions.md) | E2E test layering (Spec → DSL → Driver → Playwright), temporal isolation, Playwright run commands on Windows, selectors, DoD |
-| [`.claude/prompt-snippets/story-format.md`](.claude/prompt-snippets/story-format.md) | Story file format template and `docs/capabilities/` directory structure |
+| [`.claude/prompt-snippets/story-format.md`](.claude/prompt-snippets/story-format.md)       | Story file format template and`docs/capabilities/` directory structure                                                        |
