@@ -1,6 +1,11 @@
 import { APIRequestContext, Page, expect } from '@playwright/test';
+import { resolveApiUrl } from '../support/api-config';
 
-const BACKEND_URL = 'http://localhost:3001';
+const BACKEND_URL = resolveApiUrl();
+
+// Mirrors amplify/backend.ts's DEFAULT_USER_ID (the seeded stub user — see
+// amplify/seed.ts). Ids are UUID strings now, not Prisma's autoincrement 1.
+const DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 export class FacefileBrowserDriver {
   private readonly createdUserEmails = new Set<string>();
@@ -17,11 +22,12 @@ export class FacefileBrowserDriver {
    * establishes a default session as a side effect — via page.request, which (unlike
    * the standalone `request` fixture) shares the page's cookie jar.
    *
-   * Uses a relative URL (resolved against playwright.config.ts's baseURL, :4200) rather
-   * than BACKEND_URL — going through the dev-server proxy, exactly like the real app's own
-   * HttpClient calls, is what makes the resulting cookie reliably visible to later same-context
-   * requests. A direct cross-port call to :3001 is a different origin for cookie-matching
-   * purposes in practice and was observed to silently not carry/forward the cookie.
+   * Calls BACKEND_URL directly (the real API Gateway origin) rather than going through
+   * a dev-server proxy — there is no proxy anymore now that frontend and API are
+   * genuinely different origins (Amplify Hosting vs. API Gateway). The session cookie
+   * is SameSite=None; Secure (see functions/_shared/session.ts) specifically so this
+   * cross-origin flow works; page.request shares the page's real network/cookie stack,
+   * so it behaves exactly like the app's own credentialed fetch calls would.
    *
    * Checks the real cookie jar rather than only a "have I called this before" flag: specs
    * that establish a specific profile's session through the real picker flow (not through
@@ -35,7 +41,7 @@ export class FacefileBrowserDriver {
       this.sessionEstablished = true;
       return;
     }
-    await this.page.request.post('/api/session', { data: { userId: 1 } });
+    await this.page.request.post(`${BACKEND_URL}/session`, { data: { userId: DEFAULT_USER_ID } });
     this.sessionEstablished = true;
   }
 
@@ -49,7 +55,7 @@ export class FacefileBrowserDriver {
   }
 
   async resetTutorialProgress(): Promise<void> {
-    await this.request.put(`${BACKEND_URL}/api/tutorial/progress`, {
+    await this.request.put(`${BACKEND_URL}/tutorial/progress`, {
       data: { currentStep: 1, completed: false },
     });
   }
@@ -124,7 +130,7 @@ export class FacefileBrowserDriver {
   }
 
   async deleteAllContacts(): Promise<void> {
-    await this.request.delete(`${BACKEND_URL}/api/contacts`);
+    await this.request.delete(`${BACKEND_URL}/contacts`);
   }
 
   async expectWizardStepCounter(step: number): Promise<void> {
@@ -243,7 +249,7 @@ export class FacefileBrowserDriver {
   async deactivateUserByEmail(email: string): Promise<void> {
     const user = await this.findUserByEmail(email);
     if (!user || user.name === 'Brent Fisher') return;
-    await this.request.post(`${BACKEND_URL}/api/admin/users/${user.id}/deactivate`);
+    await this.request.post(`${BACKEND_URL}/admin/users/${user.id}/deactivate`);
   }
 
   /**
@@ -256,13 +262,13 @@ export class FacefileBrowserDriver {
   async reactivateUserByEmail(email: string): Promise<void> {
     const user = await this.findUserByEmail(email);
     if (!user) return;
-    await this.request.post(`${BACKEND_URL}/api/admin/users/${user.id}/reactivate`);
+    await this.request.post(`${BACKEND_URL}/admin/users/${user.id}/reactivate`);
   }
 
-  private async findUserByEmail(email: string): Promise<{ id: number; name: string; email: string } | undefined> {
-    const res = await this.request.get(`${BACKEND_URL}/api/admin/users`);
+  private async findUserByEmail(email: string): Promise<{ id: string; name: string; email: string } | undefined> {
+    const res = await this.request.get(`${BACKEND_URL}/admin/users`);
     const users = await res.json();
-    return users.find((u: { id: number; name: string; email: string }) => u.email === email);
+    return users.find((u: { id: string; name: string; email: string }) => u.email === email);
   }
 
   // ── Session & profile selection ─────────────────────────────────────────────
@@ -278,7 +284,7 @@ export class FacefileBrowserDriver {
   }
 
   async createActiveUserViaApi(name: string, email: string): Promise<void> {
-    await this.request.post(`${BACKEND_URL}/api/admin/users`, { data: { name, email } });
+    await this.request.post(`${BACKEND_URL}/admin/users`, { data: { name, email } });
   }
 
   async clickProfileTile(name: string): Promise<void> {
@@ -351,13 +357,13 @@ export class FacefileBrowserDriver {
 
   /**
    * Seeds a contact directly via the API — creating one also produces an immediately-due
-   * ReviewCard. Uses page.request with a relative URL (not the standalone `request` fixture,
-   * and not an absolute BACKEND_URL — see ensureAuthenticatedSession) so the contact is
-   * scoped to whichever profile is currently active in the browser's session cookie —
-   * callers must establish the session (e.g. navigateToDashboard) before calling this.
+   * ReviewCard. Uses page.request (not the standalone `request` fixture — see
+   * ensureAuthenticatedSession) so the contact is scoped to whichever profile is
+   * currently active in the browser's session cookie — callers must establish the
+   * session (e.g. navigateToDashboard) before calling this.
    */
   async createContactViaApi(name: string): Promise<void> {
-    await this.page.request.post('/api/contacts', { multipart: { name } });
+    await this.page.request.post(`${BACKEND_URL}/contacts`, { multipart: { name } });
   }
 
   async expectPeopleAddedCount(n: number): Promise<void> {

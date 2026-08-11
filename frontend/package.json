@@ -6,6 +6,7 @@
     "dev": "ng serve",
     "start": "ng serve",
     "build": "ng build",
+    "sync-outputs": "node -e \"require('fs').copyFileSync('../amplify_outputs.json', 'public/amplify_outputs.json')\"",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

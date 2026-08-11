@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface AdminUser {
-  id: number;
+  id: string;
   name: string;
   email: string;
   active: boolean;
@@ -37,15 +37,15 @@ export class AdminUsersService {
     return this.http.post<AdminUser>('/api/admin/users', payload);
   }
 
-  update(id: number, payload: UpdateUserPayload): Observable<AdminUser> {
+  update(id: string, payload: UpdateUserPayload): Observable<AdminUser> {
     return this.http.patch<AdminUser>(`/api/admin/users/${id}`, payload);
   }
 
-  deactivate(id: number): Observable<AdminUser> {
+  deactivate(id: string): Observable<AdminUser> {
     return this.http.post<AdminUser>(`/api/admin/users/${id}/deactivate`, {});
   }
 
-  reactivate(id: number): Observable<AdminUser> {
+  reactivate(id: string): Observable<AdminUser> {
     return this.http.post<AdminUser>(`/api/admin/users/${id}/reactivate`, {});
   }
 }

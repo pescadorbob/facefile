@@ -72,26 +72,30 @@ Rules:
 
 ## Local prerequisites
 
-Before running e2e tests, verify both servers are up by **checking their ports** — do NOT try to read process output on Windows (spawned processes write to a separate console window):
+There is no local backend process anymore — `backend/` (Express + Prisma/SQLite) was retired when FaceFile moved to Amplify (API Gateway + Lambda + DynamoDB). E2E now always runs the frontend against a **real deployed sandbox**:
 
 ```powershell
-# Check both servers are ready
-(Invoke-WebRequest -Uri "http://localhost:3001/api/health" -UseBasicParsing -EA SilentlyContinue).StatusCode  # expect 200
-(Invoke-WebRequest -Uri "http://localhost:4200" -UseBasicParsing -EA SilentlyContinue).StatusCode              # expect 200
+# 1. Deploy a personal sandbox backend (from amplify/) — leave this running, it watches for changes
+cd amplify; npm run sandbox
+
+# 2. Once it reports the first successful deploy, seed the default user + palaces
+npm run seed
+
+# 3. Copy amplify_outputs.json into frontend/public/ so both ng serve and e2e/support/api-config.ts
+#    (used by the driver's BACKEND_URL) can find the deployed API endpoint
+cd ../frontend; npm run sync-outputs
 ```
 
-If either is not up, start it and poll the port:
+Then verify both are up by **checking their ports** — do NOT try to read process output on Windows (spawned processes write to a separate console window):
 
 ```powershell
-# Start backend (runs in background; check port, not output)
-cd backend; node src/index.js > C:\Temp\backend.log 2>&1 &
-$end = (Get-Date).AddSeconds(30)
-while ((Get-Date) -lt $end) {
-  if ((Invoke-WebRequest -Uri "http://localhost:3001/api/health" -UseBasicParsing -EA SilentlyContinue).StatusCode -eq 200) { "Backend ready"; break }
-  Start-Sleep 2
-}
+(Invoke-WebRequest -Uri "http://localhost:4200" -UseBasicParsing -EA SilentlyContinue).StatusCode  # expect 200
+```
 
-# Start frontend (ng serve spawns a separate window — just poll the port)
+If the frontend is not up, start it and poll the port:
+
+```powershell
+# ng serve spawns a separate window — just poll the port
 Start-Process cmd -ArgumentList "/c", "cd /d C:\Users\bcfis\work\facefile\frontend && npx @angular/cli@21 serve --port 4200" -WindowStyle Minimized
 $end = (Get-Date).AddSeconds(120)
 while ((Get-Date) -lt $end) {
@@ -101,9 +105,9 @@ while ((Get-Date) -lt $end) {
 ```
 
 Rules:
-- **Never wait on command output** to determine if a server is ready — on Windows, `ng serve` and `node` write to separate console windows.
+- **Never wait on command output** to determine if a server is ready — on Windows, `ng serve` writes to a separate console window.
 - **Always poll the port** with `Invoke-WebRequest` until you get a 200.
-- Each test must create the data it needs. Do **not** depend on a pre-seeded DB.
+- Each test must create the data it needs. Do **not** depend on a pre-seeded DB beyond the one default user/palace set `npm run seed` creates.
 
 ---
 
@@ -244,7 +248,7 @@ const message = this.ctx.interpolate(parseParam(messageParam, 'message'));
 - **Cleanup belongs at the end** — put teardown in the fixture `finally` block. Do not add `beforeEach` or `afterEach` cleanup blocks in spec files; with temporal isolation (aliased names/emails), there are no pre-test leftovers to clean up, and the fixture `finally` runs unconditionally after each test.
 - **Always alias user names and emails** — use `ctx.alias(name)` for names and `aliasEmail(email)` (alias the local part before `@`) for emails in every DSL method that creates or references a user. This ensures each test run produces unique, non-conflicting accounts and deactivation-based teardown never causes 409 conflicts on subsequent runs.
 - Do not share users across specs. All DSL methods that create users (`registersUser`, `userExistsWith`, `userExistsWithEmail`, `submitsNewUserWith`) alias their inputs automatically — specs always write plain names/emails.
-- The backend currently runs in single-user mode (`DEFAULT_USER_ID = 1` in `backend/src/routes/contacts.js`). Until that changes, e2e specs must reset the relevant tables (`Contact`, `ReviewCard`, `QuizResult`, `TutorialProgress`, etc.) in teardown rather than rely on user isolation.
+- The backend currently runs in single-user mode (`DEFAULT_USER_ID` in `amplify/backend.ts`, a fixed seeded UUID — see `amplify/seed.ts`). Until that changes, e2e specs must reset the relevant DynamoDB tables (Contacts, ReviewCards, QuizResults, TutorialProgress, etc.) in teardown rather than rely on user isolation.
 
 ---
 

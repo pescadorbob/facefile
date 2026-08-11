@@ -1,0 +1,28 @@
+version: 1
+backend:
+  phases:
+    build:
+      commands:
+        - cd amplify && npm ci && cd ..
+        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+frontend:
+  phases:
+    preBuild:
+      commands:
+        # amplify_outputs.json is written to the repo root by the backend
+        # phase above; frontend/public/* ships as static assets (see
+        # angular.json's assets glob), so this is how the deployed app
+        # learns its API endpoint at runtime — see
+        # frontend/src/app/services/api-config.service.ts.
+        - cp amplify_outputs.json frontend/public/amplify_outputs.json
+        - cd frontend && npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: frontend/dist/frontend/browser
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - frontend/node_modules/**/*

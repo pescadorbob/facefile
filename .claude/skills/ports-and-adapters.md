@@ -1,179 +1,132 @@
-# Skill: Separate Endpoint into Core Business + Repository (Ports and Adapters)
+# Skill: Separate a Lambda Handler into Core Business + Repository (Ports and Adapters)
 
-When asked to refactor a route handler, apply the ports-and-adapters pattern: extract a pure domain service (the core) and a Prisma-backed repository (the adapter), connected by an interface defined in the route module or a shared contracts file.
+When asked to refactor a Lambda handler, apply the ports-and-adapters pattern: extract a pure domain service (the core) and a DynamoDB-backed repository (the adapter), connected by a plain TypeScript interface.
 
-The goal is that the route handler owns HTTP concerns only, the service owns business logic only, and the repository owns persistence only. None of the three layers knows about the internals of the others.
+The goal is that the handler owns API Gateway concerns only (parsing the event, mapping results/errors to an `APIGatewayProxyResult`), the service owns business logic only, and the repository owns persistence only. None of the three layers knows about the internals of the others.
 
 ---
 
 ## Pattern overview
 
 ```
-routes/<resource>.js          → HTTP adapter (req/res, status codes, error mapping)
-services/<resource>Service.js → core business logic (validation, rules, orchestration)
-repositories/<resource>Repository.js → Prisma adapter (all DB access)
+functions/<resource>/handler.ts       → API Gateway adapter (event/response, status codes, error mapping)
+functions/_shared/<resource>Service.ts → core business logic (validation, rules, orchestration)
+functions/_shared/<resource>Repo.ts    → DynamoDB adapter (all persistence)
 ```
 
-The service receives a repository instance via constructor injection. The route constructs both and wires them together. No layer reaches past its immediate neighbour.
+Repositories and services live in `amplify/functions/_shared/` (not per-function) because each Lambda bundles independently via esbuild — a relative import from `_shared/` is inlined into whichever function imports it, so sharing code this way costs nothing at runtime. See `amplify/functions/_shared/usersRepo.ts` + `userService.ts` (used by both the `session` and `admin-users` Lambdas) for a real example.
+
+The service receives a repository instance via constructor injection where the resource has enough surface to warrant it (`usersRepo`); trivial single-call resources (`palacesRepo`) are fine called directly from the handler — see the "when to skip the service layer" rule below.
 
 ---
 
 ## Step-by-step process
 
-### 1. Read the target route file
+### 1. Read the target handler
 
-Identify every Prisma call. For each call, note:
+Identify every DynamoDB call (`ddb.send(...)`). For each call, note:
 - **What it returns** (the shape the service will consume)
 - **What parameters it needs** (what the service will pass in)
-- **Whether it has side-effects** (create/update/delete)
+- **Whether it has side-effects** (Put/Update/Delete)
 
-### 2. Define the repository interface (as a comment contract)
+### 2. Define the repository
 
-At the top of the new repository file, write a JSDoc block listing every method the service will call. This is the "port" — the boundary. The Prisma implementation is the "adapter."
+- Table name comes from `tableName('SOME_TABLE_NAME')` (`_shared/dynamo.ts`), reading the env var wired up for that specific Lambda in `amplify/backend.ts` — never hardcode a table name.
+- Every method maps to one (or a small, cohesive group of) DynamoDB operation — no business logic, no validation.
+- Methods accept plain scalars and plain objects; they return plain record types (`interface FooRecord { ... }`).
+- Name the file `amplify/functions/_shared/<resource>Repo.ts`.
 
-```js
-/**
- * @typedef {Object} PalaceRepository
- * @property {(userId: number, options?: object) => Promise<Palace[]>} findAllByUser
- * @property {(id: number, userId: number) => Promise<Palace|null>} findById
- * @property {(data: object) => Promise<Palace>} create
- * @property {(id: number, data: object) => Promise<Palace>} update
- * @property {(id: number) => Promise<void>} remove
- */
-```
+```ts
+import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { ddb, tableName } from './dynamo';
 
-### 3. Write the repository
+const TABLE = () => tableName('PALACES_TABLE_NAME');
 
-- One `PrismaClient` instance per repository (consistent with this codebase's convention).
-- Every method maps exactly one Prisma operation — no business logic, no validation.
-- Methods accept plain scalars and plain objects; they return plain Prisma result objects.
-- Name the file `backend/src/repositories/<resource>Repository.js`.
+export interface PalaceRecord {
+  userId: string;
+  id: string;
+  name: string;
+  createdAt: string;
+}
 
-```js
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-
-const palaceRepository = {
-  findAllByUser(userId) {
-    return prisma.palace.findMany({
-      where: { userId },
-      orderBy: { id: 'asc' },
-      include: { loci: { orderBy: { position: 'asc' } } },
-    });
-  },
-
-  findById(id, userId) {
-    return prisma.palace.findFirst({ where: { id, userId } });
-  },
-
-  create(data) {
-    return prisma.palace.create({ data });
-  },
-
-  update(id, data) {
-    return prisma.palace.update({ where: { id }, data });
-  },
-
-  remove(id) {
-    return prisma.palace.delete({ where: { id } });
+export const palacesRepo = {
+  async findAllByUser(userId: string): Promise<PalaceRecord[]> {
+    // one QueryCommand, no filtering/validation beyond what the query itself needs
   },
 };
-
-module.exports = palaceRepository;
 ```
 
-### 4. Write the service
+### 3. Write the service (when the resource has real business rules)
 
-- Accept the repository as a constructor argument (dependency injection).
-- Contains all business rules: validation, authorization checks, domain decisions.
-- Never touches `req`, `res`, or HTTP status codes.
-- Throws plain `Error` objects (or typed errors) with business-meaningful messages; the route maps these to status codes.
-- Name the file `backend/src/services/<resource>Service.js`.
+- Accept the repository as a factory/constructor argument (dependency injection) — never import a repository singleton directly into a service.
+- Contains all business rules: validation, uniqueness checks, domain decisions.
+- Never touches the API Gateway event or an `APIGatewayProxyResult`.
+- Throws `ApiError` (`_shared/http.ts` — `badRequest`, `notFound`, `conflict`, etc.) with business-meaningful messages; the handler's `errorResponse()` maps these to status codes.
+- Name the file `amplify/functions/_shared/<resource>Service.ts`.
 
-```js
-function createPalaceService(repository) {
-  return {
-    async listForUser(userId) {
-      return repository.findAllByUser(userId);
-    },
+```ts
+import { badRequest, conflict, notFound } from './http';
+import { UserRecord, usersRepo } from './usersRepo';
 
-    async getForUser(id, userId) {
-      const palace = await repository.findById(id, userId);
-      if (!palace) throw Object.assign(new Error('Palace not found'), { status: 404 });
-      return palace;
-    },
-
-    async create(userId, data) {
-      if (!data.name?.trim()) throw Object.assign(new Error('Name is required'), { status: 400 });
-      return repository.create({ ...data, userId });
-    },
-
-    async update(id, userId, data) {
-      await this.getForUser(id, userId); // existence + ownership check
-      return repository.update(id, data);
-    },
-
-    async remove(id, userId) {
-      await this.getForUser(id, userId);
-      return repository.remove(id);
-    },
-  };
-}
-
-module.exports = { createPalaceService };
+export const userService = {
+  async create({ name, email }: { name?: string; email?: string }): Promise<UserRecord> {
+    if (!name?.trim()) throw badRequest('name is required');
+    const existing = await usersRepo.findByEmail(email!.trim());
+    if (existing) throw conflict('email is already in use');
+    return usersRepo.create({ name: name.trim(), email: email!.trim() });
+  },
+};
 ```
 
-### 5. Rewrite the route
+**When to skip the service layer**: if a resource is a single passthrough call with no validation or business rule (list-only, e.g. `palacesRepo.findAllByUser`), call the repository directly from the handler rather than adding a one-line service wrapper — see `functions/palaces/handler.ts`. Add the service layer the moment a second rule shows up.
 
-- Import the repository and service factory.
-- Construct both once at the top of the file.
-- Each handler: parse input from `req`, call the service, map the result or error to a response.
-- Error mapping: if the thrown error has a `.status` field, use it; otherwise 500.
+### 4. Rewrite the handler
 
-```js
-const express = require('express');
-const palaceRepository = require('../repositories/palaceRepository');
-const { createPalaceService } = require('../services/palaceService');
+- Import the repository/service.
+- Dispatch on `event.httpMethod` + a sub-path derived by stripping this function's own mount prefix from `event.path` (each Lambda is mounted at exactly one API Gateway resource — see `amplify/backend.ts`'s `mountLambda` calls — so the handler only ever needs to route within its own subtree).
+- Each branch: parse input from the event, call the service/repository, return via `json()`/`noContent()` (`_shared/http.ts`).
+- Error mapping: wrap the whole dispatch in one `try { ... } catch (err) { return errorResponse(err); }` — `errorResponse` reads `ApiError.status` when present, otherwise 500.
 
-const router = express.Router();
-const DEFAULT_USER_ID = 1;
-const palaceService = createPalaceService(palaceRepository);
+```ts
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { errorResponse, json, preflight } from '../_shared/http';
+import { palacesRepo } from '../_shared/palacesRepo';
+import { resolveUserId } from '../_shared/session';
 
-function handleError(res, err) {
-  res.status(err.status ?? 500).json({ error: err.message });
-}
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  if (event.httpMethod === 'OPTIONS') return preflight();
+  const sub = (event.path.replace(/^\/palaces/, '') || '/').replace(/\/+$/, '') || '/';
 
-router.get('/', async (req, res) => {
   try {
-    const palaces = await palaceService.listForUser(DEFAULT_USER_ID);
-    res.json(palaces);
+    if (event.httpMethod === 'GET' && sub === '/') {
+      return json(200, await palacesRepo.findAllByUser(resolveUserId(event)));
+    }
+    return json(404, { error: 'Not found' });
   } catch (err) {
-    handleError(res, err);
+    return errorResponse(err);
   }
-});
-
-module.exports = router;
+};
 ```
 
 ---
 
 ## Rules to follow strictly
 
-1. **No Prisma in routes or services.** `PrismaClient` is used only inside `repositories/`.
-2. **No HTTP concepts in services.** A service method must not reference `req`, `res`, `status`, or Express.
-3. **No business logic in repositories.** A repository method is a thin Prisma call — one query, nothing more.
-4. **Injection, not global state.** The service receives its repository as an argument; the route wires them. Do not import `prisma` at the top of a service file.
-5. **Errors carry intent.** Throw `Error` objects with a `.status` property for expected failure cases (404, 400, 403); the route's `handleError` maps them. Unexpected failures bubble as 500.
-6. **Keep this codebase's file conventions.** CommonJS (`require`/`module.exports`) throughout. No TypeScript, no `import`.
-7. **One `PrismaClient` per repository file** — consistent with how other route files work today.
+1. **No DynamoDB SDK calls in handlers or services.** `ddb.send(...)` is used only inside `_shared/<resource>Repo.ts`.
+2. **No API Gateway concepts in services.** A service method must not reference `event`, `APIGatewayProxyResult`, or status codes.
+3. **No business logic in repositories.** A repository method is a thin DynamoDB call — one query/put/update, nothing more.
+4. **Injection, not global state.** A service that needs a repository takes it as an argument; don't reach for a repository singleton from inside a service module.
+5. **Errors carry intent.** Throw `ApiError` subtypes (`_shared/http.ts`) for expected failure cases (404, 400, 409); the handler's `errorResponse()` maps them. Unexpected failures bubble as 500.
+6. **Keep this codebase's file conventions.** TypeScript throughout in `amplify/`, ESM (`import`/`export`), one function per API Gateway resource mount.
+7. **Table/bucket names always come from env vars** (`tableName('X_TABLE_NAME')`, `requiredEnv('X_BUCKET_NAME')`) wired per-function in `amplify/backend.ts` — a function should only have env vars for the tables it's actually granted access to.
 
 ---
 
 ## Checklist before finishing
 
-- [ ] `routes/<resource>.js` — no Prisma import, only Express and service calls
-- [ ] `services/<resource>Service.js` — no Prisma, no Express; accepts repository via factory arg
-- [ ] `repositories/<resource>Repository.js` — only Prisma; no business rules
+- [ ] `functions/<resource>/handler.ts` — no `ddb.send`/S3 calls, only dispatch + service/repository calls
+- [ ] `functions/_shared/<resource>Service.ts` (if present) — no DynamoDB SDK, no API Gateway types; accepts repository via factory arg
+- [ ] `functions/_shared/<resource>Repo.ts` — only DynamoDB SDK calls; no business rules
 - [ ] All existing behaviour preserved (same HTTP verbs, same response shapes, same status codes)
-- [ ] Error cases are reachable and return the correct status code
-- [ ] No new dependencies added beyond what is already in `package.json`
+- [ ] Error cases are reachable and return the correct status code via `ApiError`
+- [ ] Any new table access is granted + wired (`grantReadData`/`grantReadWriteData` + `addEnvironment`) in `amplify/backend.ts`

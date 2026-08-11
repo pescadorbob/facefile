@@ -179,7 +179,7 @@ export class AdminUsersComponent implements OnInit {
 
   readonly users     = signal<AdminUser[]>([]);
   readonly formMode  = signal<'closed' | 'create' | 'edit'>('closed');
-  readonly editingId = signal<number | null>(null);
+  readonly editingId = signal<string | null>(null);
   readonly nameField  = signal('');
   readonly emailField = signal('');
   readonly formError  = signal<string | null>(null);

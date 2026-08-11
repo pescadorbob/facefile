@@ -4,15 +4,15 @@ import { Observable } from 'rxjs';
 
 export interface CreateContactPayload {
   name: string;
-  palaceId: number | null;
-  locusId: number | null;
+  palaceId: string | null;
+  locusId: string | null;
   nameImage: string;
   associationScene: string;
   photo: File | null;
 }
 
 export interface Contact {
-  id: number;
+  id: string;
   name: string;
   photoPath: string | null;
   nameImage: string | null;

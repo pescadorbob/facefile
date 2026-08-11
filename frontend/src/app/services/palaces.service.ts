@@ -3,13 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Locus {
-  id: number;
+  id: string;
   name: string;
   position: number;
 }
 
 export interface Palace {
-  id: number;
+  id: string;
   name: string;
   loci: Locus[];
 }

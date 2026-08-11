@@ -3,3 +3,8 @@ e2e/playwright-report/trace/**
 e2e/test-results/**
 e2e/playwright-report/**
 backend/**/*.db
+
+# Amplify Gen 2 — generated per sandbox/deploy, not checked in
+amplify_outputs.json
+amplify/.amplify
+frontend/public/amplify_outputs.json

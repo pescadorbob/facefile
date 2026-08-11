@@ -432,8 +432,8 @@ export class AddPersonComponent implements OnInit {
   readonly name             = signal('');
   readonly photoFile        = signal<File | null>(null);
   readonly photoPreview     = signal('');
-  readonly palaceId         = signal<number | null>(null);
-  readonly locusId          = signal<number | null>(null);
+  readonly palaceId         = signal<string | null>(null);
+  readonly locusId          = signal<string | null>(null);
   readonly nameImage        = signal('');
   readonly associationScene = signal('');
   readonly expandedHint     = signal<number | null>(null);
@@ -482,7 +482,7 @@ export class AddPersonComponent implements OnInit {
     this.photoPreview.set('');
   }
 
-  selectPalace(id: number) {
+  selectPalace(id: string) {
     this.palaceId.set(id);
     this.locusId.set(null);
   }
