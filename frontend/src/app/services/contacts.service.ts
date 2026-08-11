@@ -33,4 +33,8 @@ export class ContactsService {
     if (payload.photo) form.append('photo', payload.photo);
     return this.http.post<Contact>('/api/contacts', form);
   }
+
+  list(): Observable<Contact[]> {
+    return this.http.get<Contact[]>('/api/contacts');
+  }
 }

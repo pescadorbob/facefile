@@ -15,6 +15,7 @@ test.describe('S-1.7.3 Session Remembered Across Browser Restarts via Persistent
     await facefile.registersActiveUser('name: Priya', 'email: priya-remember@example.com');
     await facefile.opensSelectProfile();
     await facefile.selectsProfileWithRememberMe('name: Priya');
+    await confirmThat(facefile).landsOnDashboard(); // waits for the select round-trip to finish
 
     // WHEN/THEN the session is set to persist beyond this browser session — the exact
     // mechanism (a Max-Age in the future) a real browser restart relies on to keep it
@@ -26,6 +27,7 @@ test.describe('S-1.7.3 Session Remembered Across Browser Restarts via Persistent
     await facefile.registersActiveUser('name: Priya', 'email: priya-noremember@example.com');
     await facefile.opensSelectProfile();
     await facefile.selectsProfile('name: Priya');
+    await confirmThat(facefile).landsOnDashboard(); // waits for the select round-trip to finish
 
     // WHEN/THEN the session is scoped to the current browser session only
     await confirmThat(facefile).sessionCookieIsBrowserScoped();

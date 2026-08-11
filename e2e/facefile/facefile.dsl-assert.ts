@@ -139,6 +139,92 @@ export class FacefileDslAssert {
   async sessionCookieIsBrowserScoped(): Promise<void> {
     await this.dsl.driver.expectSessionCookieIsBrowserScoped();
   }
+
+  // ── Dashboard ────────────────────────────────────────────────────────────────
+
+  async seesPeopleAddedCount(countParam: string): Promise<void> {
+    const count = parseInt(parseParam(countParam, 'count'), 10);
+    await this.dsl.driver.expectPeopleAddedCount(count);
+  }
+
+  async seesCardsDueCount(countParam: string): Promise<void> {
+    const count = parseInt(parseParam(countParam, 'count'), 10);
+    await this.dsl.driver.expectCardsDueCount(count);
+  }
+
+  async seesDueTileHighlighted(): Promise<void> {
+    await this.dsl.driver.expectDueTileHighlighted();
+  }
+
+  async doesNotSeeDueTileHighlighted(): Promise<void> {
+    await this.dsl.driver.expectDueTileNotHighlighted();
+  }
+
+  async seesQuizPromptBanner(): Promise<void> {
+    await this.dsl.driver.expectQuizPromptBannerVisible();
+  }
+
+  async doesNotSeeQuizPromptBanner(): Promise<void> {
+    await this.dsl.driver.expectQuizPromptBannerNotVisible();
+  }
+
+  async isOnQuizScreen(): Promise<void> {
+    await this.dsl.driver.expectOnQuizPage();
+  }
+
+  async seesStandingActionBanners(): Promise<void> {
+    await this.dsl.driver.expectStandingBannersVisible();
+  }
+
+  async isOnTeachModeScreen(): Promise<void> {
+    await this.dsl.driver.expectOnTeachPage();
+  }
+
+  async isOnTutorialScreen(): Promise<void> {
+    await this.dsl.driver.expectOnTutorialPage();
+  }
+
+  async isOnPalacesScreen(): Promise<void> {
+    await this.dsl.driver.expectOnPalacesPage();
+  }
+
+  async isOnAddPersonScreen(): Promise<void> {
+    await this.dsl.driver.expectOnAddPersonPage();
+  }
+
+  async isOnAdminUsersScreen(): Promise<void> {
+    await this.dsl.driver.expectOnAdminUsersPage();
+  }
+
+  async isOnMeetingsScreen(): Promise<void> {
+    await this.dsl.driver.expectOnMeetingsPage();
+  }
+
+  async seesContactInInventory(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectContactVisibleInInventory(name);
+  }
+
+  async doesNotSeeContactInInventory(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectContactNotVisibleInInventory(name);
+  }
+
+  async seesAddPersonShortcut(): Promise<void> {
+    await this.dsl.driver.expectAddPersonShortcutVisible();
+  }
+
+  async seesEmptyInventoryMessage(): Promise<void> {
+    await this.dsl.driver.expectEmptyInventoryMessage();
+  }
+
+  async seesAdminLink(): Promise<void> {
+    await this.dsl.driver.expectAdminLinkVisible();
+  }
+
+  async seesMeetingsLink(): Promise<void> {
+    await this.dsl.driver.expectMeetingsLinkVisible();
+  }
 }
 
 export function confirmThat(facefile: FacefileDsl): FacefileDslAssert {

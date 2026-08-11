@@ -6,6 +6,19 @@ const router = express.Router();
 const prisma = new PrismaClient();
 const DEFAULT_USER_ID = 1;
 
+router.get('/', async (req, res) => {
+  const userId = req.userId ?? DEFAULT_USER_ID;
+  try {
+    const contacts = await prisma.contact.findMany({
+      where: { userId },
+      orderBy: { id: 'asc' },
+    });
+    res.json(contacts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post('/', upload.single('photo'), async (req, res) => {
   const userId = req.userId ?? DEFAULT_USER_ID;
   const { name, palaceId, locusId, nameImage, associationScene, notes } = req.body;

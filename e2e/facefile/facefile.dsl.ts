@@ -212,4 +212,47 @@ export class FacefileDsl {
   async tampersWithSessionCookie(): Promise<void> {
     await this.driver.setTamperedSessionCookie();
   }
+
+  // ── Dashboard ────────────────────────────────────────────────────────────────
+
+  async opensTheDashboard(): Promise<void> {
+    await this.driver.navigateToDashboard();
+  }
+
+  async registersContact(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.createContactViaApi(name);
+  }
+
+  async startsQuizFromBanner(): Promise<void> {
+    await this.driver.clickStartQuizBanner();
+  }
+
+  async startsAddPersonFlowFromShortcut(): Promise<void> {
+    await this.driver.clickAddPersonShortcut();
+  }
+
+  async startsAddPersonFlowFromEmptyState(): Promise<void> {
+    await this.driver.clickAddFirstPersonLink();
+  }
+
+  async launchesTeachModeBanner(): Promise<void> {
+    await this.driver.clickTeachModeBanner();
+  }
+
+  async opensTutorialFromDashboard(): Promise<void> {
+    await this.driver.clickTutorialBanner();
+  }
+
+  async navigatesToPalacesFromDashboard(): Promise<void> {
+    await this.driver.clickPalacesBanner();
+  }
+
+  async activatesAdminLink(): Promise<void> {
+    await this.driver.clickAdminLink();
+  }
+
+  async activatesMeetingsLink(): Promise<void> {
+    await this.driver.clickMeetingsLink();
+  }
 }

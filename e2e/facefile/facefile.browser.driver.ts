@@ -15,11 +15,27 @@ export class FacefileBrowserDriver {
    * Every protected route now requires a session. Existing specs never establish one
    * explicitly (that predates this feature), so each of their navigation methods
    * establishes a default session as a side effect — via page.request, which (unlike
-   * the standalone `request` fixture) shares the page's cookie jar. Memoized per test.
+   * the standalone `request` fixture) shares the page's cookie jar.
+   *
+   * Uses a relative URL (resolved against playwright.config.ts's baseURL, :4200) rather
+   * than BACKEND_URL — going through the dev-server proxy, exactly like the real app's own
+   * HttpClient calls, is what makes the resulting cookie reliably visible to later same-context
+   * requests. A direct cross-port call to :3001 is a different origin for cookie-matching
+   * purposes in practice and was observed to silently not carry/forward the cookie.
+   *
+   * Checks the real cookie jar rather than only a "have I called this before" flag: specs
+   * that establish a specific profile's session through the real picker flow (not through
+   * this method) must be able to revisit a protected page afterwards without this silently
+   * re-logging-in as the default user and clobbering that profile's session.
    */
   private async ensureAuthenticatedSession(): Promise<void> {
     if (this.sessionEstablished) return;
-    await this.page.request.post(`${BACKEND_URL}/api/session`, { data: { userId: 1 } });
+    const cookies = await this.page.context().cookies();
+    if (cookies.some(c => c.name === 'facefile_user_id')) {
+      this.sessionEstablished = true;
+      return;
+    }
+    await this.page.request.post('/api/session', { data: { userId: 1 } });
     this.sessionEstablished = true;
   }
 
@@ -258,7 +274,7 @@ export class FacefileBrowserDriver {
 
   /** Deliberately does NOT establish a session first — used to exercise the guard's redirect. */
   async navigateToProtectedPageWithoutSession(): Promise<void> {
-    await this.page.goto('/tutorial');
+    await this.page.goto('/dashboard');
   }
 
   async createActiveUserViaApi(name: string, email: string): Promise<void> {
@@ -288,8 +304,9 @@ export class FacefileBrowserDriver {
     await this.page.waitForURL(/\/select-profile/);
   }
 
+  /** "Home" is the real dashboard now — this used to be a /tutorial stand-in before E-2.4 existed. */
   async expectLandedOnHomePage(): Promise<void> {
-    await this.page.waitForURL(/\/tutorial/);
+    await this.page.waitForURL(/\/dashboard/);
   }
 
   async expectProfileTileVisible(name: string): Promise<void> {
@@ -323,5 +340,133 @@ export class FacefileBrowserDriver {
     const sessionCookie = cookies.find(c => c.name === 'facefile_user_id');
     expect(sessionCookie).toBeTruthy();
     expect(sessionCookie!.expires).toBe(-1);
+  }
+
+  // ── Dashboard ────────────────────────────────────────────────────────────────
+
+  async navigateToDashboard(): Promise<void> {
+    await this.ensureAuthenticatedSession();
+    await this.page.goto('/dashboard');
+  }
+
+  /**
+   * Seeds a contact directly via the API — creating one also produces an immediately-due
+   * ReviewCard. Uses page.request with a relative URL (not the standalone `request` fixture,
+   * and not an absolute BACKEND_URL — see ensureAuthenticatedSession) so the contact is
+   * scoped to whichever profile is currently active in the browser's session cookie —
+   * callers must establish the session (e.g. navigateToDashboard) before calling this.
+   */
+  async createContactViaApi(name: string): Promise<void> {
+    await this.page.request.post('/api/contacts', { multipart: { name } });
+  }
+
+  async expectPeopleAddedCount(n: number): Promise<void> {
+    await expect(this.page.getByTestId('people-added-tile')).toContainText(String(n));
+  }
+
+  async expectCardsDueCount(n: number): Promise<void> {
+    await expect(this.page.getByTestId('due-review-tile')).toContainText(String(n));
+  }
+
+  async expectDueTileHighlighted(): Promise<void> {
+    await expect(this.page.getByTestId('due-review-tile')).toHaveAttribute('data-highlighted', 'true');
+  }
+
+  async expectDueTileNotHighlighted(): Promise<void> {
+    await expect(this.page.getByTestId('due-review-tile')).toHaveAttribute('data-highlighted', 'false');
+  }
+
+  async expectQuizPromptBannerVisible(): Promise<void> {
+    await expect(this.page.getByTestId('quiz-prompt-banner')).toBeVisible();
+  }
+
+  async expectQuizPromptBannerNotVisible(): Promise<void> {
+    await expect(this.page.getByTestId('quiz-prompt-banner')).toHaveCount(0);
+  }
+
+  async clickStartQuizBanner(): Promise<void> {
+    await this.page.getByTestId('quiz-prompt-banner').click();
+  }
+
+  async expectStandingBannersVisible(): Promise<void> {
+    await expect(this.page.getByRole('button', { name: 'Teach mode' })).toBeVisible();
+    await expect(this.page.getByRole('button', { name: 'Tutorial' })).toBeVisible();
+    await expect(this.page.getByRole('button', { name: 'Memory palaces' })).toBeVisible();
+  }
+
+  async clickTeachModeBanner(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Teach mode' }).click();
+  }
+
+  async clickTutorialBanner(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Tutorial' }).click();
+  }
+
+  async clickPalacesBanner(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Memory palaces' }).click();
+  }
+
+  async expectOnTeachPage(): Promise<void> {
+    await this.page.waitForURL(/\/teach/);
+  }
+
+  async expectOnTutorialPage(): Promise<void> {
+    await this.page.waitForURL(/\/tutorial/);
+  }
+
+  async expectOnPalacesPage(): Promise<void> {
+    await this.page.waitForURL(/\/palaces/);
+  }
+
+  async expectOnAddPersonPage(): Promise<void> {
+    await this.page.waitForURL(/\/persons\/new/);
+  }
+
+  async expectOnAdminUsersPage(): Promise<void> {
+    await this.page.waitForURL(/\/admin\/users/);
+  }
+
+  async expectOnMeetingsPage(): Promise<void> {
+    await this.page.waitForURL(/\/meetings/);
+  }
+
+  async expectContactVisibleInInventory(name: string): Promise<void> {
+    await expect(this.page.getByText(name, { exact: true })).toBeVisible();
+  }
+
+  async expectContactNotVisibleInInventory(name: string): Promise<void> {
+    await expect(this.page.getByText(name, { exact: true })).toHaveCount(0);
+  }
+
+  async expectAddPersonShortcutVisible(): Promise<void> {
+    await expect(this.page.getByRole('button', { name: 'Add person' })).toBeVisible();
+  }
+
+  async clickAddPersonShortcut(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Add person' }).click();
+  }
+
+  async expectEmptyInventoryMessage(): Promise<void> {
+    await expect(this.page.getByText('No one stored here yet.')).toBeVisible();
+  }
+
+  async clickAddFirstPersonLink(): Promise<void> {
+    await this.page.getByRole('button', { name: /Add the first person/i }).click();
+  }
+
+  async expectAdminLinkVisible(): Promise<void> {
+    await expect(this.page.getByRole('button', { name: 'Admin' })).toBeVisible();
+  }
+
+  async clickAdminLink(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Admin' }).click();
+  }
+
+  async expectMeetingsLinkVisible(): Promise<void> {
+    await expect(this.page.getByRole('button', { name: 'Meetings' })).toBeVisible();
+  }
+
+  async clickMeetingsLink(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Meetings' }).click();
   }
 }

@@ -8,6 +8,12 @@ export const routes: Routes = [
       import('./pages/select-profile/select-profile.component').then((m) => m.SelectProfileComponent),
   },
   {
+    path: 'dashboard',
+    canActivate: [profileGuard],
+    loadComponent: () =>
+      import('./pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+  },
+  {
     path: 'tutorial',
     canActivate: [profileGuard],
     loadComponent: () =>
@@ -26,10 +32,28 @@ export const routes: Routes = [
       import('./pages/quiz/quiz.component').then((m) => m.QuizComponent),
   },
   {
+    path: 'teach',
+    canActivate: [profileGuard],
+    loadComponent: () =>
+      import('./pages/teach/teach.component').then((m) => m.TeachComponent),
+  },
+  {
+    path: 'meetings',
+    canActivate: [profileGuard],
+    loadComponent: () =>
+      import('./pages/meetings/meetings.component').then((m) => m.MeetingsComponent),
+  },
+  {
+    path: 'palaces',
+    canActivate: [profileGuard],
+    loadComponent: () =>
+      import('./pages/palaces/palaces.component').then((m) => m.PalacesComponent),
+  },
+  {
     path: 'admin/users',
     canActivate: [profileGuard],
     loadComponent: () =>
       import('./pages/admin/users/admin-users.component').then((m) => m.AdminUsersComponent),
   },
-  { path: '', redirectTo: 'tutorial', pathMatch: 'full' },
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 ];
