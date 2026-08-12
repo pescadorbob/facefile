@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-8.3.4 Admin Deactivates a User Account', () => {
   test('admin deactivates an active account', async ({ facefile }) => {
     // GIVEN a user account is active
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera4@example.com');
 
@@ -15,6 +16,7 @@ test.describe('S-8.3.4 Admin Deactivates a User Account', () => {
 
   test('deactivated account cannot sign in', async ({ facefile }) => {
     // GIVEN a user account has been deactivated
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera5@example.com');
     await facefile.deactivatesUser('name: Sam Rivera');
@@ -28,6 +30,7 @@ test.describe('S-8.3.4 Admin Deactivates a User Account', () => {
 
   test('deactivated status is reflected in the account list', async ({ facefile }) => {
     // GIVEN a user account has been deactivated
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera6@example.com');
     await facefile.deactivatesUser('name: Sam Rivera');
@@ -44,6 +47,7 @@ test.describe('S-8.3.4 Admin Deactivates a User Account', () => {
     // (the row only ever shows Deactivate OR Reactivate, so the redundant second call is
     // driven directly rather than through a button the UI no longer offers — see
     // deactivatesUserAgain in facefile.dsl.ts)
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera7@example.com');
     await facefile.deactivatesUser('name: Sam Rivera');

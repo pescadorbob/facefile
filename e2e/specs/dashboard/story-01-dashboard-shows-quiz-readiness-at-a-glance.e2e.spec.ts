@@ -14,6 +14,7 @@ test.describe('S-2.4.1 Dashboard Shows Quiz Readiness at a Glance — Metrics Ro
     // GIVEN the active profile has 2 people added, each producing an immediately-due card
     // (there is no quiz-taking flow yet to ever produce a QuizResult, so quiz answers/accuracy
     // are legitimately 0 / — here rather than the story's illustrative "40 answers, 85%")
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
     await facefile.registersContact('name: Priya');
     await facefile.registersContact('name: Sam');
@@ -28,6 +29,7 @@ test.describe('S-2.4.1 Dashboard Shows Quiz Readiness at a Glance — Metrics Ro
 
   test('due-review tile is highlighted when cards are due', async ({ facefile }) => {
     // GIVEN the active profile has a card due for review
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
     await facefile.registersContact('name: Priya');
 
@@ -54,6 +56,7 @@ test.describe('S-2.4.1 Dashboard Shows Quiz Readiness at a Glance — Metrics Ro
 
   test('quiz-prompt banner appears when cards are due', async ({ facefile }) => {
     // GIVEN the active profile has a card due for review
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
     await facefile.registersContact('name: Priya');
 
@@ -78,6 +81,7 @@ test.describe('S-2.4.1 Dashboard Shows Quiz Readiness at a Glance — Metrics Ro
 
   test('starting quiz from the banner', async ({ facefile }) => {
     // GIVEN the quiz-prompt banner is visible
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
     await facefile.registersContact('name: Priya');
     await facefile.opensTheDashboard();

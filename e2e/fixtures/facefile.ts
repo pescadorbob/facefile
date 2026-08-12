@@ -18,6 +18,7 @@ export const test = base.extend<FacefileFixtures>({
       await driver.resetTutorialProgress();
       await driver.deleteAllContacts();
       await driver.deactivateTrackedUsers();
+      await driver.deactivateTrackedProfiles();
     },
     { auto: true },
   ],

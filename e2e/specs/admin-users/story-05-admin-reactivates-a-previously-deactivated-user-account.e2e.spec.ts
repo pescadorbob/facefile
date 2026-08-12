@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-8.3.5 Admin Reactivates a Previously Deactivated User Account', () => {
   test('admin reactivates a deactivated account', async ({ facefile }) => {
     // GIVEN a user account is deactivated
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera8@example.com');
     await facefile.deactivatesUser('name: Sam Rivera');
@@ -17,6 +18,7 @@ test.describe('S-8.3.5 Admin Reactivates a Previously Deactivated User Account',
 
   test('reactivated account can sign in again', async ({ facefile }) => {
     // GIVEN a user account has just been reactivated
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera9@example.com');
     await facefile.deactivatesUser('name: Sam Rivera');
@@ -32,6 +34,7 @@ test.describe('S-8.3.5 Admin Reactivates a Previously Deactivated User Account',
 
   test('active status is reflected in the account list', async ({ facefile }) => {
     // GIVEN a user account has just been reactivated
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera10@example.com');
     await facefile.deactivatesUser('name: Sam Rivera');
@@ -49,6 +52,7 @@ test.describe('S-8.3.5 Admin Reactivates a Previously Deactivated User Account',
     // (the row only ever shows Deactivate OR Reactivate, so the redundant second call is
     // driven directly rather than through a button the UI no longer offers — see
     // reactivatesUserAgain in facefile.dsl.ts)
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera11@example.com');
     await confirmThat(facefile).seesUserStatus('name: Sam Rivera', 'status: active');

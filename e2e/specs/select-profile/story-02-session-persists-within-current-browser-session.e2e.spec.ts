@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-1.7.2 Session Persists Within the Current Browser Session — Refresh Stays, Switch Profile Ends It', () => {
   test('refresh does not re-prompt for a profile', async ({ facefile }) => {
     // GIVEN the user has an active session
+    await facefile.signsInAsTestUser();
     await facefile.opensTheTutorial();
 
     // WHEN the user refreshes the page
@@ -14,6 +15,7 @@ test.describe('S-1.7.2 Session Persists Within the Current Browser Session — R
 
   test('navigating between pages keeps the session', async ({ facefile }) => {
     // GIVEN the user has an active session
+    await facefile.signsInAsTestUser();
     await facefile.opensTheTutorial();
 
     // WHEN the user navigates to another protected page
@@ -25,6 +27,7 @@ test.describe('S-1.7.2 Session Persists Within the Current Browser Session — R
 
   test('switching profile clears the session', async ({ facefile }) => {
     // GIVEN the user has an active session
+    await facefile.signsInAsTestUser();
     await facefile.opensTheTutorial();
 
     // WHEN the user activates "Switch profile"
@@ -37,6 +40,7 @@ test.describe('S-1.7.2 Session Persists Within the Current Browser Session — R
   test('selecting a new profile after switching starts a fresh session', async ({ facefile }) => {
     // GIVEN the user has switched profiles and is viewing the profile picker
     await facefile.registersActiveUser('name: Sam', 'email: sam-switch@example.com');
+    await facefile.signsInAsTestUser();
     await facefile.opensTheTutorial();
     await facefile.activatesSwitchProfile();
 

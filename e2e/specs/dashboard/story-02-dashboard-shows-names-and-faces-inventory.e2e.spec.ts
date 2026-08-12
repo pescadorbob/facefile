@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-2.4.2 Dashboard Shows Names-and-Faces Inventory — Contact Grid with Add Shortcut', () => {
   test('inventory shows all contacts for the active profile', async ({ facefile }) => {
     // GIVEN the active profile has people stored
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
     await facefile.registersContact('name: Priya');
     await facefile.registersContact('name: Sam');
@@ -17,6 +18,7 @@ test.describe('S-2.4.2 Dashboard Shows Names-and-Faces Inventory — Contact Gri
 
   test('add-person shortcut appears alongside the contact cards', async ({ facefile }) => {
     // GIVEN the active profile has at least one person stored
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
     await facefile.registersContact('name: Priya');
 
@@ -29,6 +31,7 @@ test.describe('S-2.4.2 Dashboard Shows Names-and-Faces Inventory — Contact Gri
 
   test('add-person shortcut starts the add-person flow', async ({ facefile }) => {
     // GIVEN the names-and-faces inventory is visible
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
     await facefile.registersContact('name: Priya');
     await facefile.opensTheDashboard();

@@ -24,6 +24,29 @@ export const userService = {
     return usersRepo.create({ name: name.trim(), email: email.trim() });
   },
 
+  /**
+   * Self-service profile creation from the picker (S-1.7.4): name only, no
+   * email — the admin flow above stays the route for accounts that need one.
+   *
+   * Names are the only thing distinguishing one tile from another in the
+   * picker, so they're the uniqueness key here (case-insensitive, trimmed).
+   * DynamoDB can't express that as a condition or a case-insensitive query, so
+   * the check reads the (small, single-household) user list and compares in
+   * memory — same shape as the admin flow's findByEmail guard, which is
+   * likewise a read-then-write rather than a true constraint.
+   */
+  async createProfile({ name }: { name?: string }): Promise<UserRecord> {
+    const trimmed = name?.trim();
+    if (!trimmed) throw badRequest('name is required');
+
+    const existing = await usersRepo.findAll();
+    if (existing.some((u) => u.name.trim().toLowerCase() === trimmed.toLowerCase())) {
+      throw conflict('name is already in use');
+    }
+
+    return usersRepo.create({ name: trimmed });
+  },
+
   async update(id: string, { name, email }: { name?: string; email?: string }): Promise<UserRecord> {
     await userService.getOrThrow(id);
 

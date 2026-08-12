@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-2.4.4 Dashboard Navigation Shortcuts — Admin, Meetings, Switch Profile', () => {
   test('Admin link is reachable from the header', async ({ facefile }) => {
     // GIVEN the user is on the dashboard
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
 
     // WHEN the user looks at the header
@@ -14,6 +15,7 @@ test.describe('S-2.4.4 Dashboard Navigation Shortcuts — Admin, Meetings, Switc
 
   test('Meetings link is reachable from the header', async ({ facefile }) => {
     // GIVEN the user is on the dashboard
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
 
     // WHEN the user looks at the header
@@ -30,6 +32,7 @@ test.describe('S-2.4.4 Dashboard Navigation Shortcuts — Admin, Meetings, Switc
 
   test('switching profile clears the session', async ({ facefile }) => {
     // GIVEN the user is on the dashboard with an active profile session
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
 
     // WHEN the user activates "Switch profile"

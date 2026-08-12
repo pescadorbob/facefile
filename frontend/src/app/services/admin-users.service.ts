@@ -5,7 +5,8 @@ import { Observable } from 'rxjs';
 export interface AdminUser {
   id: string;
   name: string;
-  email: string;
+  /** Absent on profiles created from the picker — those are name-only. */
+  email?: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;

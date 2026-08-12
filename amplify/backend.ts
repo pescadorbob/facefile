@@ -120,7 +120,10 @@ function wire(fn: lambda.IFunction, env: Record<string, string>) {
 }
 
 const sessionLambda = backend.sessionFunction.resources.lambda;
-usersTable.grantReadData(sessionLambda);
+// Write access as well as read: POST /session/profiles creates the profile it
+// then signs in (S-1.7.4) — the picker is the only way into an app with no
+// profiles yet, so that path can't be admin-only.
+usersTable.grantReadWriteData(sessionLambda);
 wire(sessionLambda, {
   USERS_TABLE_NAME: usersTable.tableName,
   FRONTEND_URL,

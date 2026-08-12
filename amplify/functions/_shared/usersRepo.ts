@@ -8,7 +8,11 @@ const EMAIL_INDEX = 'byEmail';
 export interface UserRecord {
   id: string;
   name: string;
-  email: string;
+  /** Optional: a profile created from the picker (S-1.7.4) is name-only, so the
+   * attribute is simply absent on that item — and therefore absent from the
+   * `byEmail` GSI, which only indexes items that carry an email. Admin-created
+   * accounts (POST /admin/users) still always have one. */
+  email?: string;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -46,8 +50,10 @@ export const usersRepo = {
     return (res.Items?.[0] as UserRecord | undefined) ?? null;
   },
 
-  async create(data: { name: string; email: string }): Promise<UserRecord> {
+  async create(data: { name: string; email?: string }): Promise<UserRecord> {
     const now = nowIso();
+    // `email: undefined` is pruned by the document client's removeUndefinedValues
+    // (see _shared/dynamo.ts), so a name-only profile stores no email attribute.
     const user: UserRecord = { id: newId(), name: data.name, email: data.email, active: true, createdAt: now, updatedAt: now };
     await ddb.send(new PutCommand({ TableName: TABLE(), Item: user }));
     return user;

@@ -128,6 +128,22 @@ export class FacefileDslAssert {
     await this.dsl.driver.expectProfileTileNotVisible(name);
   }
 
+  async seesCreateProfileOption(): Promise<void> {
+    await this.dsl.driver.expectCreateProfileActionVisible();
+  }
+
+  async doesNotSeeCreateProfilePrompt(): Promise<void> {
+    await this.dsl.driver.expectProfileNameFieldNotVisible();
+  }
+
+  async seesNameRequiredErrorOnProfileForm(): Promise<void> {
+    await this.dsl.driver.expectProfileFormError('A name is required.');
+  }
+
+  async seesDuplicateNameErrorOnProfileForm(): Promise<void> {
+    await this.dsl.driver.expectProfileFormErrorContains('already in use');
+  }
+
   async seesRememberMeOption(): Promise<void> {
     await this.dsl.driver.expectRememberMeOptionVisible();
   }

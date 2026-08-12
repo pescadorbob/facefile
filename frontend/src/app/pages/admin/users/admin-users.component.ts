@@ -81,7 +81,8 @@ import { AdminUser, AdminUsersService } from '../../../services/admin-users.serv
                 </div>
 
                 @if (formError()) {
-                  <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">
+                  <p data-testid="user-form-error"
+                    style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">
                     {{ formError() }}
                   </p>
                 }
@@ -128,7 +129,7 @@ import { AdminUser, AdminUsersService } from '../../../services/admin-users.serv
                 @for (u of users(); track u.id) {
                   <tr class="border-b" style="border-color:var(--border)">
                     <td class="px-4 py-3" style="font-family:'Lora',serif;font-size:14.5px;color:var(--fg)">{{ u.name }}</td>
-                    <td class="px-4 py-3" style="font-family:'Lora',serif;font-size:14.5px;color:var(--fg)">{{ u.email }}</td>
+                    <td class="px-4 py-3" style="font-family:'Lora',serif;font-size:14.5px;color:var(--fg)">{{ u.email || '—' }}</td>
                     <td class="px-4 py-3">
                       <span class="text-xs uppercase tracking-widest"
                         style="font-family:'DM Mono',monospace"
@@ -208,7 +209,7 @@ export class AdminUsersComponent implements OnInit {
     this.formMode.set('edit');
     this.editingId.set(user.id);
     this.nameField.set(user.name);
-    this.emailField.set(user.email);
+    this.emailField.set(user.email ?? '');
     this.formError.set(null);
   }
 

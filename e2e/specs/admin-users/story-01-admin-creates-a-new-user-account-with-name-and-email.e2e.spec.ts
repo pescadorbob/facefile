@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-8.3.1 Admin Creates a New User Account with Name and Email', () => {
   test('admin creates an account with valid details', async ({ facefile }) => {
     // GIVEN the admin is on the create-user form
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
 
     // WHEN the admin enters a name and email and submits
@@ -15,6 +16,7 @@ test.describe('S-8.3.1 Admin Creates a New User Account with Name and Email', ()
 
   test('missing name blocks creation', async ({ facefile }) => {
     // GIVEN the admin is on the create-user form
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
 
     // WHEN the admin leaves the name blank and submits
@@ -26,6 +28,7 @@ test.describe('S-8.3.1 Admin Creates a New User Account with Name and Email', ()
 
   test('missing email blocks creation', async ({ facefile }) => {
     // GIVEN the admin is on the create-user form
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
 
     // WHEN the admin leaves the email blank and submits
@@ -37,6 +40,7 @@ test.describe('S-8.3.1 Admin Creates a New User Account with Name and Email', ()
 
   test('duplicate email blocks creation', async ({ facefile }) => {
     // GIVEN a user account already exists with a given email
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Original Owner', 'email: taken@example.com');
 

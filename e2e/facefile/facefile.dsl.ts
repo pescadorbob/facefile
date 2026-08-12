@@ -187,6 +187,21 @@ export class FacefileDsl {
     await this.driver.reloadPage();
   }
 
+  /**
+   * GIVEN-step sign-in for any spec that just needs *a* signed-in user: creates its own
+   * isolated account (aliased name/email, deactivated in fixture teardown) and signs in as
+   * it, so the spec doesn't depend on the seeded profile being present and active.
+   *
+   * Specs that need the seeded starter palaces (the add-person wizard) must NOT use this —
+   * a fresh account has no palaces. Those keep the seeded profile the driver signs in as.
+   */
+  async signsInAsTestUser(nameParam = 'name: Test User', emailParam = 'email: test-user@example.com'): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    const email = this.ctx.aliasEmail(parseParam(emailParam, 'email'));
+    await this.driver.signInAsNewUserViaApi(name, email);
+    this.driver.trackCreatedUserEmail(email);
+  }
+
   async registersActiveUser(nameParam: string, emailParam: string): Promise<void> {
     const name = this.ctx.alias(parseParam(nameParam, 'name'));
     const email = this.ctx.aliasEmail(parseParam(emailParam, 'email'));
@@ -203,6 +218,33 @@ export class FacefileDsl {
     const name = this.ctx.alias(parseParam(nameParam, 'name'));
     await this.driver.checkRememberMeOnPicker();
     await this.driver.clickProfileTile(name);
+  }
+
+  async opensCreateProfilePrompt(): Promise<void> {
+    await this.driver.clickCreateProfileAction();
+  }
+
+  async createsProfile(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.fillProfileNameField(name);
+    await this.driver.clickCreateProfileSubmit();
+    this.driver.trackCreatedUserName(name);
+  }
+
+  async attemptsToCreateProfileWithoutName(): Promise<void> {
+    await this.driver.fillProfileNameField('');
+    await this.driver.clickCreateProfileSubmit();
+  }
+
+  /** nameParam must reuse a raw value already aliased earlier in this test (an existing profile's name). */
+  async attemptsToCreateProfileWithDuplicateName(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.fillProfileNameField(name);
+    await this.driver.clickCreateProfileSubmit();
+  }
+
+  async abandonsCreateProfilePrompt(): Promise<void> {
+    await this.driver.clickCancelOnProfileForm();
   }
 
   async activatesSwitchProfile(): Promise<void> {

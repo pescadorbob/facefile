@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-8.3.2 Admin Views a List of All User Accounts', () => {
   test('list shows all accounts with their details', async ({ facefile }) => {
     // GIVEN several user accounts exist
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Priya Shah', 'email: priya.shah@example.com');
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera@example.com');
@@ -19,6 +20,7 @@ test.describe('S-8.3.2 Admin Views a List of All User Accounts', () => {
 
   test('list includes deactivated accounts', async ({ facefile }) => {
     // GIVEN a user account has been deactivated
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera2@example.com');
     await facefile.deactivatesUser('name: Sam Rivera');

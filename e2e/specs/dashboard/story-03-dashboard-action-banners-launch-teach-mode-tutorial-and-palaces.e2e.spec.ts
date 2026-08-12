@@ -15,6 +15,7 @@ test.describe('S-2.4.3 Dashboard Action Banners Launch Teach Mode, Tutorial, and
 
   test('standing banners are visible with cards due', async ({ facefile }) => {
     // GIVEN the active profile has cards due for review and the quiz-prompt banner is showing
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
     await facefile.registersContact('name: Priya');
     await facefile.opensTheDashboard();
@@ -27,6 +28,7 @@ test.describe('S-2.4.3 Dashboard Action Banners Launch Teach Mode, Tutorial, and
 
   test('launching teach mode', async ({ facefile }) => {
     // GIVEN the dashboard is visible
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
 
     // WHEN the user taps the teach-mode banner
@@ -38,6 +40,7 @@ test.describe('S-2.4.3 Dashboard Action Banners Launch Teach Mode, Tutorial, and
 
   test('opening the tutorial', async ({ facefile }) => {
     // GIVEN the dashboard is visible
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
 
     // WHEN the user taps the tutorial banner
@@ -49,6 +52,7 @@ test.describe('S-2.4.3 Dashboard Action Banners Launch Teach Mode, Tutorial, and
 
   test('navigating to palaces', async ({ facefile }) => {
     // GIVEN the dashboard is visible
+    await facefile.signsInAsTestUser();
     await facefile.opensTheDashboard();
 
     // WHEN the user taps the memory-palaces banner

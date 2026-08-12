@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-8.3.3 Admin Updates a User\'s Name or Email', () => {
   test("admin updates a user's name", async ({ facefile }) => {
     // GIVEN a user account exists
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Jordan Lee', 'email: jordan.lee3@example.com');
 
@@ -16,6 +17,7 @@ test.describe('S-8.3.3 Admin Updates a User\'s Name or Email', () => {
 
   test("admin updates a user's email", async ({ facefile }) => {
     // GIVEN a user account exists
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Robin Chase', 'email: robin.chase@example.com');
 
@@ -28,6 +30,7 @@ test.describe('S-8.3.3 Admin Updates a User\'s Name or Email', () => {
 
   test('clearing the email blocks the update', async ({ facefile }) => {
     // GIVEN the admin is editing a user account
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Casey Kim', 'email: casey.kim@example.com');
 
@@ -41,6 +44,7 @@ test.describe('S-8.3.3 Admin Updates a User\'s Name or Email', () => {
 
   test('duplicate email blocks the update', async ({ facefile }) => {
     // GIVEN a user account exists with a given email
+    await facefile.signsInAsTestUser();
     await facefile.opensAdminUsers();
     await facefile.createsUserWith('name: Sam Rivera', 'email: sam.rivera3@example.com');
     // AND a different account the admin is editing

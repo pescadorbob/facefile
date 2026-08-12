@@ -9,6 +9,7 @@ const DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 export class FacefileBrowserDriver {
   private readonly createdUserEmails = new Set<string>();
+  private readonly createdUserNames = new Set<string>();
   private sessionEstablished = false;
 
   constructor(
@@ -54,8 +55,13 @@ export class FacefileBrowserDriver {
     await this.page.reload();
   }
 
+  /**
+   * page.request, so this follows whichever profile the session cookie currently holds — a
+   * spec that signed in as its own test user must reset/clean that user's data, not the
+   * seeded profile's. With no cookie set it resolves to the seeded profile exactly as before.
+   */
   async resetTutorialProgress(): Promise<void> {
-    await this.request.put(`${BACKEND_URL}/tutorial/progress`, {
+    await this.page.request.put(`${BACKEND_URL}/tutorial/progress`, {
       data: { currentStep: 1, completed: false },
     });
   }
@@ -129,8 +135,9 @@ export class FacefileBrowserDriver {
     await this.page.getByPlaceholder(/juggling glowing marquee/i).fill(text);
   }
 
+  /** page.request for the same reason as resetTutorialProgress — clean the active profile. */
   async deleteAllContacts(): Promise<void> {
-    await this.request.delete(`${BACKEND_URL}/contacts`);
+    await this.page.request.delete(`${BACKEND_URL}/contacts`);
   }
 
   async expectWizardStepCounter(step: number): Promise<void> {
@@ -188,20 +195,42 @@ export class FacefileBrowserDriver {
     await this.page.getByPlaceholder('e.g. jordan.lee@example.com').fill(email);
   }
 
+  /**
+   * Clicks save and waits for it to settle: the form closes on success, or an inline error
+   * renders when the save is rejected. Returning while the request is still in flight lets
+   * the next action open a form that the arriving response then closes out from under it —
+   * which surfaces as a detached-element failure several steps later.
+   */
   async clickSaveUserForm(): Promise<void> {
     await this.page.getByRole('button', { name: /Create user|Save changes/ }).click();
+    // Keyed on the form's own field, not the save button: the button relabels to "Saving…"
+    // for the duration of the request, so waiting on it would return while still in flight.
+    const formField = this.page.getByPlaceholder('e.g. Jordan Lee');
+    await expect
+      .poll(async () => (await formField.count()) === 0 || (await this.page.getByTestId('user-form-error').count()) > 0)
+      .toBe(true);
   }
 
   async clickEditOnUserRow(name: string): Promise<void> {
     await this.page.getByRole('row', { name }).getByRole('button', { name: 'Edit' }).click();
   }
 
+  /**
+   * Both of these wait for the row's action to flip before returning — the row offers only
+   * whichever action currently applies, so the opposite button appearing is the signal that
+   * the request landed. Without it a following step (navigating to the picker, say) can run
+   * against the pre-change state.
+   */
   async clickDeactivateOnUserRow(name: string): Promise<void> {
-    await this.page.getByRole('row', { name }).getByRole('button', { name: 'Deactivate' }).click();
+    const row = this.page.getByRole('row', { name });
+    await row.getByRole('button', { name: 'Deactivate' }).click();
+    await expect(row.getByRole('button', { name: 'Reactivate' })).toBeVisible();
   }
 
   async clickReactivateOnUserRow(name: string): Promise<void> {
-    await this.page.getByRole('row', { name }).getByRole('button', { name: 'Reactivate' }).click();
+    const row = this.page.getByRole('row', { name });
+    await row.getByRole('button', { name: 'Reactivate' }).click();
+    await expect(row.getByRole('button', { name: 'Deactivate' })).toBeVisible();
   }
 
   async expectUserRowVisible(name: string): Promise<void> {
@@ -252,6 +281,27 @@ export class FacefileBrowserDriver {
     await this.request.post(`${BACKEND_URL}/admin/users/${user.id}/deactivate`);
   }
 
+  /** Records a name-only profile (created through the picker, so it has no email to track by). */
+  trackCreatedUserName(name: string): void {
+    if (name) this.createdUserNames.add(name);
+  }
+
+  /** Deactivates (never deletes) every name-only profile this test created. Never touches "Brent Fisher". */
+  async deactivateTrackedProfiles(): Promise<void> {
+    for (const name of this.createdUserNames) {
+      const user = await this.findUserByName(name);
+      if (!user || user.name === 'Brent Fisher') continue;
+      await this.request.post(`${BACKEND_URL}/admin/users/${user.id}/deactivate`);
+    }
+    this.createdUserNames.clear();
+  }
+
+  private async findUserByName(name: string): Promise<{ id: string; name: string } | undefined> {
+    const res = await this.request.get(`${BACKEND_URL}/admin/users`);
+    const users = await res.json();
+    return users.find((u: { id: string; name: string }) => u.name === name);
+  }
+
   /**
    * Repeats the deactivate/reactivate action directly against the backend, bypassing the
    * UI. The row only ever exposes whichever single action currently applies (Deactivate OR
@@ -287,12 +337,58 @@ export class FacefileBrowserDriver {
     await this.request.post(`${BACKEND_URL}/admin/users`, { data: { name, email } });
   }
 
+  /**
+   * Creates an active account through the admin API and establishes the browser session as
+   * it. Uses page.request for the login (not the standalone `request` fixture) so the cookie
+   * lands in the page's own jar — see ensureAuthenticatedSession, which this then satisfies,
+   * so later navigations don't fall back to the seeded profile and clobber this session.
+   */
+  async signInAsNewUserViaApi(name: string, email: string): Promise<void> {
+    const created = await this.request.post(`${BACKEND_URL}/admin/users`, { data: { name, email } });
+    const user = await created.json();
+    await this.page.request.post(`${BACKEND_URL}/session`, { data: { userId: user.id } });
+    this.sessionEstablished = true;
+  }
+
   async clickProfileTile(name: string): Promise<void> {
     await this.page.getByRole('button', { name }).click();
   }
 
   async checkRememberMeOnPicker(): Promise<void> {
     await this.page.getByLabel(/Remember me/i).check();
+  }
+
+  async clickCreateProfileAction(): Promise<void> {
+    await this.page.getByRole('button', { name: /Create a profile/i }).click();
+  }
+
+  async fillProfileNameField(name: string): Promise<void> {
+    await this.page.getByLabel('Name', { exact: true }).fill(name);
+  }
+
+  async clickCreateProfileSubmit(): Promise<void> {
+    // Exact accessible name — the picker's "+ Create a profile" opener must not match.
+    await this.page.getByRole('button', { name: 'Create profile' }).click();
+  }
+
+  async clickCancelOnProfileForm(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Cancel' }).click();
+  }
+
+  async expectCreateProfileActionVisible(): Promise<void> {
+    await expect(this.page.getByRole('button', { name: /Create a profile/i })).toBeVisible();
+  }
+
+  async expectProfileNameFieldNotVisible(): Promise<void> {
+    await expect(this.page.getByLabel('Name', { exact: true })).toHaveCount(0);
+  }
+
+  async expectProfileFormError(text: string): Promise<void> {
+    await expect(this.page.getByText(text, { exact: true })).toBeVisible();
+  }
+
+  async expectProfileFormErrorContains(text: string): Promise<void> {
+    await expect(this.page.getByText(new RegExp(text, 'i'))).toBeVisible();
   }
 
   async clickSwitchProfile(): Promise<void> {
