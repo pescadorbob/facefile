@@ -118,6 +118,20 @@ export class FacefileDslAssert {
     await this.dsl.driver.expectLandedOnHomePage();
   }
 
+  /**
+   * The picker finished loading its profiles from the backend, rather than
+   * falling back to "Unable to load profiles". Says nothing about *which*
+   * profiles came back, so it holds against any environment's data.
+   */
+  async seesProfileListLoaded(): Promise<void> {
+    await this.dsl.driver.expectProfileListSettled();
+  }
+
+  /** No call the page made to the backend was blocked or dropped by the browser. */
+  async seesNoFailedBackendCalls(): Promise<void> {
+    await this.dsl.driver.expectNoFailedXhrRequests();
+  }
+
   async seesProfileInPicker(nameParam: string): Promise<void> {
     const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
     await this.dsl.driver.expectProfileTileVisible(name);

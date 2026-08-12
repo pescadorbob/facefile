@@ -1,5 +1,6 @@
 import { APIRequestContext, Page, expect } from '@playwright/test';
 import { resolveApiUrl } from '../support/api-config';
+import { assertLocalTarget } from '../support/target';
 
 const BACKEND_URL = resolveApiUrl();
 
@@ -11,11 +12,22 @@ export class FacefileBrowserDriver {
   private readonly createdUserEmails = new Set<string>();
   private readonly createdUserNames = new Set<string>();
   private sessionEstablished = false;
+  private readonly failedXhr: string[] = [];
 
   constructor(
     private readonly page: Page,
     private readonly request: APIRequestContext,
-  ) {}
+  ) {
+    // Recorded from construction because the interesting failures happen during
+    // the very first navigation, before any spec could ask for them. Limited to
+    // xhr/fetch so a blocked font or a missing favicon can't fail a run — the
+    // app's own calls to the API are the contract under test.
+    page.on('requestfailed', req => {
+      const type = req.resourceType();
+      if (type !== 'xhr' && type !== 'fetch') return;
+      this.failedXhr.push(`${req.method()} ${req.url()} — ${req.failure()?.errorText ?? 'failed'}`);
+    });
+  }
 
   /**
    * Every protected route now requires a session. Existing specs never establish one
@@ -61,6 +73,7 @@ export class FacefileBrowserDriver {
    * seeded profile's. With no cookie set it resolves to the seeded profile exactly as before.
    */
   async resetTutorialProgress(): Promise<void> {
+    assertLocalTarget('resetTutorialProgress');
     await this.page.request.put(`${BACKEND_URL}/tutorial/progress`, {
       data: { currentStep: 1, completed: false },
     });
@@ -137,6 +150,7 @@ export class FacefileBrowserDriver {
 
   /** page.request for the same reason as resetTutorialProgress — clean the active profile. */
   async deleteAllContacts(): Promise<void> {
+    assertLocalTarget('deleteAllContacts');
     await this.page.request.delete(`${BACKEND_URL}/contacts`);
   }
 
@@ -404,6 +418,27 @@ export class FacefileBrowserDriver {
 
   async expectOnSelectProfilePage(): Promise<void> {
     await this.page.waitForURL(/\/select-profile/);
+  }
+
+  /**
+   * Waits for the picker to reach a settled state and requires that state not
+   * be the failure one. The page renders exactly one of three outcomes once its
+   * profile request resolves — the "who's using" heading (profiles came back),
+   * the empty-state prompt (none came back), or the load error — so waiting on
+   * all three and then rejecting the error reports a real failure immediately
+   * instead of burning the full timeout on an element that will never appear.
+   */
+  async expectProfileListSettled(): Promise<void> {
+    const withProfiles = this.page.getByRole('heading', { name: /who.s using facefile\?/i });
+    const empty = this.page.getByText('No profiles yet.');
+    const failed = this.page.getByText('Unable to load profiles');
+
+    await expect(withProfiles.or(empty).or(failed)).toBeVisible();
+    await expect(failed).toHaveCount(0);
+  }
+
+  async expectNoFailedXhrRequests(): Promise<void> {
+    expect(this.failedXhr, `the page's own xhr/fetch calls failed:\n  ${this.failedXhr.join('\n  ')}`).toEqual([]);
   }
 
   /** "Home" is the real dashboard now — this used to be a /tutorial stand-in before E-2.4 existed. */
