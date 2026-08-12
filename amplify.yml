@@ -18,12 +18,15 @@ frontend:
         # learns its API endpoint at runtime — see
         # frontend/src/app/services/api-config.service.ts.
         - cp amplify_outputs.json frontend/public/amplify_outputs.json
-        - cd frontend && npm install
+        # `npm --prefix` rather than `cd frontend &&` — Amplify runs every
+        # phase in one shell session, so a `cd` leaks into later phases and
+        # the next relative `cd frontend` then resolves to frontend/frontend.
+        # npm still runs the script with cwd set to frontend/, so `ng` finds
+        # angular.json. Every path here stays relative to the repo root.
+        - npm --prefix frontend install
     build:
       commands:
-        # cd again rather than relying on preBuild's cwd carrying into this
-        # phase — Amplify Hosting doesn't guarantee that across phases.
-        - cd frontend && npm run build
+        - npm --prefix frontend run build
   artifacts:
     baseDirectory: frontend/dist/frontend/browser
     files:
