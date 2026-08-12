@@ -1,8 +1,16 @@
 # Executable Specification
 
-When our developers start working on the feature described in the specification with the example created above, the test based on this specification will initially fail because it's not yet automated and the feature isn't yet implemented. The developers will implement the relevant feature and connect it to the test automation framework. They'll use a test automation framework which pulls the inputs from the specification and validates the expected outputs without requiring them to actually change the specification document. This could be plain old java with JUnit, or something like Gherkin and Cucumber. It is up to the team implementing. I personally prefer plain old java, but teams may choose whatever they find the most expressive.
+**You're not just learning a testing practice today. You're experiencing what development looks like from here on out: spec-driven development.**
 
-[*A full working example in java can be seen here.*](https://github.com/davef77/atdd-course-examples/tree/master)
+The industry is converging on a single realization — the bottleneck in AI-assisted development was never the code generation. It's the specification. Agents write code faster than any of us can review it; what they can't do is decide what "correct" means. That's the job that doesn't go away, and it's the job you just did when you wrote that example.
+
+Here's what makes it real, and it's the most powerful move you'll take away today: **you can hand an AI a failing test it is structurally incapable of cheating.**
+
+The spec and example we just built are about to become executable. The test derived from them fails right now — no automation, no feature. That failing test is what you give the agent, and it beats any prompt you could write, because the specification document *is* the fixture. The automation pulls inputs and expected outputs straight out of the spec, so the agent can't quietly loosen an assertion or rewrite an expectation to turn the bar green. The only path to passing is building the feature the business actually asked for.
+
+That's the inversion. You stop prompting and reviewing whatever comes back. You define "done" first, in business language, in a document your domain experts can read and your automation can execute — then let the agent grind against it until it's satisfied. The spec becomes the interface between human intent and machine output.
+
+How you bind the spec to the code is a detail. Plain Java with JUnit or javascript with jest works. So does Gherkin and Cucumber. I prefer plain Java or Jest, but pick whatever your team finds most expressive — the leverage is in the specification being the single source of truth, not in the framework you wire it with.
 
 Ideas and practices such as the following will help automate the specification efficiently:
 
