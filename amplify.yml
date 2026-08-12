@@ -4,7 +4,12 @@ backend:
     build:
       commands:
         - cd amplify && npm install && cd ..
-        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+        # Not `npx ampx ...` — there's no package literally named `ampx` on
+        # the registry for npx to fall back to once it isn't found locally,
+        # and ampx only exists inside amplify/node_modules (the CLI deps
+        # live scoped to amplify/, not a root-level package.json). Invoking
+        # the installed binary directly avoids that resolution failure.
+        - amplify/node_modules/.bin/ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
     preBuild:
@@ -18,7 +23,9 @@ frontend:
         - cd frontend && npm install
     build:
       commands:
-        - npm run build
+        # cd again rather than relying on preBuild's cwd carrying into this
+        # phase — Amplify Hosting doesn't guarantee that across phases.
+        - cd frontend && npm run build
   artifacts:
     baseDirectory: frontend/dist/frontend/browser
     files:
