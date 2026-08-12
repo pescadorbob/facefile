@@ -7,6 +7,14 @@ backend:
         # of these run from the repo root — `amplify/package.json` is only the
         # `{"type": "module"}` marker and has no deps of its own to install.
         - npm install
+        # backend.ts reads FRONTEND_URL at CDK synth time and bakes it into the
+        # Lambdas' Access-Control-Allow-Origin (which must be a literal origin,
+        # not "*", since requests carry the session cookie). Unset, it falls back
+        # to http://localhost:4200 and every browser call from the deployed app
+        # fails CORS. Default it to this branch's Amplify Hosting domain; an
+        # explicit Console env var still wins, which is how you'd point it at a
+        # custom domain later.
+        - export FRONTEND_URL="${FRONTEND_URL:-https://$AWS_BRANCH.$AWS_APP_ID.amplifyapp.com}"
         - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
