@@ -3,7 +3,7 @@ backend:
   phases:
     build:
       commands:
-        - cd amplify && npm ci && cd ..
+        - cd amplify && npm install && cd ..
         - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
@@ -15,7 +15,7 @@ frontend:
         # learns its API endpoint at runtime — see
         # frontend/src/app/services/api-config.service.ts.
         - cp amplify_outputs.json frontend/public/amplify_outputs.json
-        - cd frontend && npm ci
+        - cd frontend && npm install
     build:
       commands:
         - npm run build
