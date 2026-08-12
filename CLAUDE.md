@@ -30,10 +30,12 @@ amplify/ (Amplify Gen 2 — CDK-based)
 
 ### Backend (Amplify)
 
+Run these from the **repo root**, not from `amplify/` — the Amplify CLI and CDK deps live in the root `package.json`, and `amplify/package.json` is only a `{"type": "module"}` marker with no deps or scripts of its own (the same layout Amplify Gen 2 scaffolds by default).
+
 ```bash
-cd amplify
+npm install       # once, at the root — installs ampx + CDK + the AWS SDK clients the Lambdas bundle
 npm run sandbox   # ampx sandbox — deploys a personal AWS stack, watches for changes, hot-swaps Lambda code
-npm run seed      # tsx seed.ts — seeds the default user + starter palaces (run once after the first sandbox deploy)
+npm run seed      # tsx amplify/seed.ts — seeds the default user + starter palaces (run once after the first sandbox deploy)
 npm run deploy    # ampx pipeline-deploy — non-interactive deploy for CI/Amplify Hosting builds (see amplify.yml)
 ```
 
@@ -121,7 +123,7 @@ If a future story needs either as a first-class, independently-queryable resourc
 
 No `.env` file — Amplify Gen 2 backends configure via `backend.ts` + Amplify-managed secrets, not dotenv:
 
-- **`SESSION_COOKIE_SECRET`** — set per sandbox with `npx ampx sandbox secret set SESSION_COOKIE_SECRET` (from `amplify/`), or via the Amplify Console's Secrets UI for deployed branches. Referenced in code via `secret('SESSION_COOKIE_SECRET')` in each function's `resource.ts`.
+- **`SESSION_COOKIE_SECRET`** — set per sandbox with `npx ampx sandbox secret set SESSION_COOKIE_SECRET` (from the repo root), or via the Amplify Console's Secrets UI for deployed branches. Referenced in code via `secret('SESSION_COOKIE_SECRET')` in each function's `resource.ts`.
 - **`FRONTEND_URL`** — read from the `FRONTEND_URL` process env var at CDK synth time in `backend.ts` (defaults to `http://localhost:4200`), used for both CORS and the S3 bucket's CORS policy. Set this to the real Amplify Hosting domain for deployed environments.
 - Table names, the photos bucket name, and `DEFAULT_USER_ID` are wired automatically by `backend.ts` — nothing to configure by hand.
 

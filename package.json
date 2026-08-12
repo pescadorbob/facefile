@@ -1,0 +1,28 @@
+{
+  "name": "facefile",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "sandbox": "ampx sandbox",
+    "deploy": "ampx pipeline-deploy",
+    "seed": "tsx amplify/seed.ts"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.170.0",
+    "constructs": "^10.4.2",
+    "@aws-sdk/client-dynamodb": "^3.716.0",
+    "@aws-sdk/lib-dynamodb": "^3.716.0",
+    "@aws-sdk/client-s3": "^3.716.0",
+    "busboy": "^1.6.0"
+  },
+  "devDependencies": {
+    "@aws-amplify/backend": "^1.14.0",
+    "@aws-amplify/backend-cli": "^1.4.0",
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.2",
+    "@types/aws-lambda": "^8.10.146",
+    "@types/node": "^22.10.2",
+    "@types/busboy": "^1.5.4"
+  }
+}
