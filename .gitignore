@@ -8,3 +8,9 @@ backend/**/*.db
 amplify_outputs.json
 amplify/.amplify
 frontend/public/amplify_outputs.json
+
+# amplify
+node_modules
+.amplify
+amplify_outputs*
+amplifyconfiguration*
