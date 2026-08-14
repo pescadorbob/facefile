@@ -1,7 +1,9 @@
 import { defineBackend } from '@aws-amplify/backend';
-import { Stack } from 'aws-cdk-lib';
+import { Duration, Stack } from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -9,8 +11,11 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import { adminUsersFunction } from './functions/adminUsers/resource';
 import { contactsFunction } from './functions/contacts/resource';
 import { dashboardFunction } from './functions/dashboard/resource';
+import { notificationsFunction } from './functions/notifications/resource';
 import { palacesFunction } from './functions/palaces/resource';
+import { quizFunction } from './functions/quiz/resource';
 import { sessionFunction } from './functions/session/resource';
+import { settingsFunction } from './functions/settings/resource';
 import { tutorialFunction } from './functions/tutorial/resource';
 
 // No `defineAuth`/Cognito here by design. Per CLAUDE.md, FaceFile's
@@ -25,6 +30,9 @@ const backend = defineBackend({
   contactsFunction,
   adminUsersFunction,
   dashboardFunction,
+  quizFunction,
+  settingsFunction,
+  notificationsFunction,
 });
 
 const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:4200';
@@ -77,6 +85,21 @@ const quizResultsTable = new dynamodb.Table(dataStack, 'QuizResultsTable', {
 
 const tutorialProgressTable = new dynamodb.Table(dataStack, 'TutorialProgressTable', {
   partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+  billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+});
+
+// C-4 additions. Settings is one item per user (quiz defaults + reminder schedule),
+// keyed the same way TutorialProgress is; Notifications is the delivered-reminder
+// list, which is also what the in-app notification channel *is* — see
+// functions/_shared/notificationsRepo.ts.
+const userSettingsTable = new dynamodb.Table(dataStack, 'UserSettingsTable', {
+  partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+  billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+});
+
+const notificationsTable = new dynamodb.Table(dataStack, 'NotificationsTable', {
+  partitionKey: { name: 'userId', type: dynamodb.AttributeType.STRING },
+  sortKey: { name: 'id', type: dynamodb.AttributeType.STRING },
   billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
 });
 
@@ -173,12 +196,68 @@ const dashboardLambda = backend.dashboardFunction.resources.lambda;
 contactsTable.grantReadData(dashboardLambda);
 reviewCardsTable.grantReadData(dashboardLambda);
 quizResultsTable.grantReadData(dashboardLambda);
+// Read-only: /dashboard/upcoming groups days in the user's own timezone, which is
+// stored with their reminder settings.
+userSettingsTable.grantReadData(dashboardLambda);
 wire(dashboardLambda, {
   CONTACTS_TABLE_NAME: contactsTable.tableName,
   REVIEW_CARDS_TABLE_NAME: reviewCardsTable.tableName,
   QUIZ_RESULTS_TABLE_NAME: quizResultsTable.tableName,
+  USER_SETTINGS_TABLE_NAME: userSettingsTable.tableName,
   FRONTEND_URL,
   DEFAULT_USER_ID,
+});
+
+// Answering a question writes the review-history row and reschedules the card;
+// building a session reads contacts, cards and the user's quiz defaults.
+const quizLambda = backend.quizFunction.resources.lambda;
+contactsTable.grantReadData(quizLambda);
+reviewCardsTable.grantReadWriteData(quizLambda);
+quizResultsTable.grantReadWriteData(quizLambda);
+userSettingsTable.grantReadData(quizLambda);
+wire(quizLambda, {
+  CONTACTS_TABLE_NAME: contactsTable.tableName,
+  REVIEW_CARDS_TABLE_NAME: reviewCardsTable.tableName,
+  QUIZ_RESULTS_TABLE_NAME: quizResultsTable.tableName,
+  USER_SETTINGS_TABLE_NAME: userSettingsTable.tableName,
+  FRONTEND_URL,
+  DEFAULT_USER_ID,
+});
+
+const settingsLambda = backend.settingsFunction.resources.lambda;
+userSettingsTable.grantReadWriteData(settingsLambda);
+wire(settingsLambda, {
+  USER_SETTINGS_TABLE_NAME: userSettingsTable.tableName,
+  FRONTEND_URL,
+  DEFAULT_USER_ID,
+});
+
+// The reminder sweep reads everyone's settings, counts their due cards, writes the
+// notification, then stamps the settings row with the day it sent on.
+const notificationsLambda = backend.notificationsFunction.resources.lambda;
+notificationsTable.grantReadWriteData(notificationsLambda);
+userSettingsTable.grantReadWriteData(notificationsLambda);
+reviewCardsTable.grantReadData(notificationsLambda);
+wire(notificationsLambda, {
+  NOTIFICATIONS_TABLE_NAME: notificationsTable.tableName,
+  USER_SETTINGS_TABLE_NAME: userSettingsTable.tableName,
+  REVIEW_CARDS_TABLE_NAME: reviewCardsTable.tableName,
+  FRONTEND_URL,
+  DEFAULT_USER_ID,
+});
+
+// Every 15 minutes rather than hourly: users pick an hour *and* a minute (S-4.7.2),
+// so a coarser tick would silently round everyone's choice. The sweep itself is
+// idempotent per local day, so extra ticks cost a scan and send nothing.
+//
+// Scoped to the Lambda's own stack, not dataStack. An events.Rule elsewhere would
+// reference the function's ARN while `targets.LambdaFunction` adds the invoke
+// permission back in the function's stack referencing the rule's ARN — a circular
+// stack dependency CDK refuses to synth. Same stack, no cross-stack reference either way.
+new events.Rule(Stack.of(notificationsLambda), 'ReviewReminderSchedule', {
+  description: 'FaceFile review reminders — dispatches due-review notifications (E-4.7)',
+  schedule: events.Schedule.rate(Duration.minutes(15)),
+  targets: [new targets.LambdaFunction(notificationsLambda)],
 });
 
 // ---------------------------------------------------------------------------
@@ -215,6 +294,9 @@ mountLambda(restApi.root, 'tutorial', tutorialLambda);
 mountLambda(restApi.root, 'palaces', palacesLambda);
 mountLambda(restApi.root, 'contacts', contactsLambda);
 mountLambda(restApi.root, 'dashboard', dashboardLambda);
+mountLambda(restApi.root, 'quiz', quizLambda);
+mountLambda(restApi.root, 'settings', settingsLambda);
+mountLambda(restApi.root, 'notifications', notificationsLambda);
 mountLambda(restApi.root.addResource('admin'), 'users', adminUsersLambda);
 
 // Custom (non-Data/non-Auth) resources surface to the frontend under
@@ -237,6 +319,8 @@ backend.addOutput({
       reviewCards: reviewCardsTable.tableName,
       quizResults: quizResultsTable.tableName,
       tutorialProgress: tutorialProgressTable.tableName,
+      userSettings: userSettingsTable.tableName,
+      notifications: notificationsTable.tableName,
     },
     photosBucket: photosBucket.bucketName,
     defaultUserId: DEFAULT_USER_ID,

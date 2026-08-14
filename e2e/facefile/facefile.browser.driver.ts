@@ -1,4 +1,4 @@
-import { APIRequestContext, Page, expect } from '@playwright/test';
+import { APIRequestContext, Locator, Page, expect } from '@playwright/test';
 import { resolveApiUrl } from '../support/api-config';
 import { assertLocalTarget } from '../support/target';
 
@@ -618,23 +618,21 @@ export class FacefileBrowserDriver {
     await this.page.goto('/dashboard');
   }
 
-  /**
-   * Seeds a contact directly via the API — creating one also produces an immediately-due
-   * ReviewCard. Uses page.request (not the standalone `request` fixture — see
-   * ensureAuthenticatedSession) so the contact is scoped to whichever profile is
-   * currently active in the browser's session cookie — callers must establish the
-   * session (e.g. navigateToDashboard) before calling this.
-   */
-  async createContactViaApi(name: string): Promise<void> {
-    await this.page.request.post(`${BACKEND_URL}/contacts`, { multipart: { name } });
-  }
-
   async expectPeopleAddedCount(n: number): Promise<void> {
     await expect(this.page.getByTestId('people-added-tile')).toContainText(String(n));
   }
 
   async expectCardsDueCount(n: number): Promise<void> {
     await expect(this.page.getByTestId('due-review-tile')).toContainText(String(n));
+  }
+
+  /**
+   * Waits out the dashboard's refresh interval rather than only checking what is on
+   * screen right now. Generous on purpose: the page polls every 15 seconds, so the
+   * default expect timeout would expire before the first refresh could land.
+   */
+  async expectCardsDueCountEventually(n: number): Promise<void> {
+    await expect(this.page.getByTestId('due-review-tile')).toContainText(String(n), { timeout: 25_000 });
   }
 
   async expectDueTileHighlighted(): Promise<void> {
@@ -737,5 +735,491 @@ export class FacefileBrowserDriver {
 
   async clickMeetingsLink(): Promise<void> {
     await this.page.getByRole('button', { name: 'Meetings' }).click();
+  }
+
+  async clickUpcomingLink(): Promise<void> {
+    await this.page.getByTestId('upcoming-link').click();
+  }
+
+  async clickRemindersLink(): Promise<void> {
+    await this.page.getByTestId('reminders-link').click();
+  }
+
+  async clickDueReviewTile(): Promise<void> {
+    await this.page.getByTestId('due-review-tile').click();
+  }
+
+  async expectCaughtUpMessageVisible(): Promise<void> {
+    await expect(this.page.getByTestId('caught-up-message')).toBeVisible();
+  }
+
+  async expectCaughtUpMessageNotVisible(): Promise<void> {
+    await expect(this.page.getByTestId('caught-up-message')).toHaveCount(0);
+  }
+
+  async expectNextDueDateVisible(): Promise<void> {
+    await expect(this.page.getByTestId('next-due-date')).toBeVisible();
+  }
+
+  // ── Quiz sessions ────────────────────────────────────────────────────────────
+
+  async navigateToQuiz(): Promise<void> {
+    await this.ensureAuthenticatedSession();
+    await this.page.goto('/quiz');
+  }
+
+  /** The post-add entry point: one question about the contact just saved. */
+  async navigateToQuizForContact(contactId: string): Promise<void> {
+    await this.ensureAuthenticatedSession();
+    await this.page.goto(`/quiz?contactId=${encodeURIComponent(contactId)}`);
+  }
+
+  /**
+   * A 1×1 PNG. Name → Face questions need a photo to point at and photos to use as
+   * decoys, so any spec exercising that direction has to create contacts that have
+   * one — the image's content is irrelevant, only its presence.
+   */
+  private static readonly PIXEL_PNG = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  );
+
+  /** page.request, so the contact lands on whichever profile the session cookie holds. */
+  async createContactViaApi(
+    name: string,
+    options: { withPhoto?: boolean; nameImage?: string; associationScene?: string } = {},
+  ): Promise<string> {
+    const multipart: Record<string, string | { name: string; mimeType: string; buffer: Buffer }> = { name };
+    if (options.nameImage) multipart.nameImage = options.nameImage;
+    if (options.associationScene) multipart.associationScene = options.associationScene;
+    if (options.withPhoto) {
+      multipart.photo = { name: 'face.png', mimeType: 'image/png', buffer: FacefileBrowserDriver.PIXEL_PNG };
+    }
+    const res = await this.page.request.post(`${BACKEND_URL}/contacts`, { multipart });
+    const body = await res.json();
+    if (!res.ok() || !body?.id) {
+      throw new Error(`Could not create the contact "${name}": ${res.status()} ${JSON.stringify(body)}`);
+    }
+    return body.id as string;
+  }
+
+  async findContactIdByName(name: string): Promise<string> {
+    const res = await this.page.request.get(`${BACKEND_URL}/contacts`);
+    const contacts = (await res.json()) as { id: string; name: string }[];
+    const match = contacts.find(contact => contact.name === name);
+    if (!match) throw new Error(`No contact named "${name}" on the active profile`);
+    return match.id;
+  }
+
+  /**
+   * Answers one question straight through the API. Used to push a card's next review
+   * into the future without reaching into the database — a rated answer is exactly how
+   * a card stops being due, so the state a spec sets up is one the app can really reach.
+   */
+  async submitQuizAnswerViaApi(contactId: string, rating: string): Promise<void> {
+    const res = await this.page.request.post(`${BACKEND_URL}/quiz/answer`, {
+      data: { contactId, direction: 'face-to-name', rating, correct: rating !== 'forgot' },
+    });
+    if (!res.ok()) throw new Error(`Could not record an answer for ${contactId}: ${res.status()}`);
+  }
+
+  async clickReviewDueButton(): Promise<void> {
+    await this.page.getByTestId('review-due-btn').click();
+  }
+
+  async clickPracticeAllButton(): Promise<void> {
+    await this.page.getByTestId('practice-all-btn').click();
+  }
+
+  async clickModeOption(mode: string): Promise<void> {
+    await this.page.getByTestId(`mode-${mode}`).click();
+  }
+
+  async clickAnswerFormatOption(format: string): Promise<void> {
+    await this.page.getByTestId(`answer-format-${format}`).click();
+  }
+
+  async fillAnswerInput(value: string): Promise<void> {
+    await this.page.getByTestId('answer-input').fill(value);
+  }
+
+  async clickSubmitAnswer(): Promise<void> {
+    await this.page.getByTestId('submit-answer-btn').click();
+  }
+
+  async clickNameOptionByText(name: string): Promise<void> {
+    await this.page.getByTestId('name-option').filter({ hasText: name }).first().click();
+  }
+
+  /** Options carry their contact id, so "the right one" and "any other one" are both addressable. */
+  async clickPhotoOptionForContact(contactId: string): Promise<void> {
+    await this.page.locator(`[data-testid="photo-option"][data-contact-id="${contactId}"]`).click();
+  }
+
+  async clickPhotoOptionOtherThan(contactId: string): Promise<void> {
+    await this.page.locator(`[data-testid="photo-option"]:not([data-contact-id="${contactId}"])`).first().click();
+  }
+
+  /**
+   * Clicks a rating and waits for it to settle. The reveal panel stays up until the
+   * answer has been recorded and the session has moved on, so its disappearance is the
+   * signal the write landed — returning while the request is still in flight lets the
+   * next step read a review history that has not been written yet. Same guard, and same
+   * reason, as clickSaveUserForm.
+   */
+  async clickRatingButton(rating: string): Promise<void> {
+    await this.page.getByTestId(`rating-${rating}`).click();
+    await expect(this.page.getByTestId('reveal-panel')).toHaveCount(0);
+  }
+
+  async clickDismissExplainer(): Promise<void> {
+    await this.page.getByTestId('dismiss-explainer').click();
+  }
+
+  async clickRatingHelp(): Promise<void> {
+    await this.page.getByTestId('rating-help').click();
+  }
+
+  async clickSkipQuiz(): Promise<void> {
+    await this.page.getByTestId('skip-quiz-btn').click();
+  }
+
+  async clickFinishSession(): Promise<void> {
+    await this.page.getByTestId('finish-session-btn').click();
+  }
+
+  async expectDueCountText(count: number): Promise<void> {
+    await expect(this.page.getByTestId('due-count')).toHaveText(String(count));
+  }
+
+  async expectReviewDueButtonVisible(): Promise<void> {
+    await expect(this.page.getByTestId('review-due-btn')).toBeVisible();
+  }
+
+  async expectReviewDueButtonNotVisible(): Promise<void> {
+    await expect(this.page.getByTestId('review-due-btn')).toHaveCount(0);
+  }
+
+  async expectPracticeAllButtonVisible(): Promise<void> {
+    await expect(this.page.getByTestId('practice-all-btn')).toBeVisible();
+  }
+
+  async expectNextDuePanelVisible(): Promise<void> {
+    await expect(this.page.getByTestId('next-due-date')).toBeVisible();
+    await expect(this.page.getByTestId('next-due-countdown')).toBeVisible();
+  }
+
+  async expectModeSelected(mode: string): Promise<void> {
+    await expect(this.page.getByTestId(`mode-${mode}`)).toHaveAttribute('data-selected', 'true');
+  }
+
+  async expectPhotoPromptVisible(): Promise<void> {
+    await expect(this.page.getByTestId('prompt-photo')).toBeVisible();
+  }
+
+  async expectNamePromptContains(name: string): Promise<void> {
+    await expect(this.page.getByTestId('prompt-name')).toContainText(name);
+  }
+
+  async expectNamePromptNotVisible(): Promise<void> {
+    await expect(this.page.getByTestId('prompt-name')).toHaveCount(0);
+  }
+
+  /** The strong form of "no name hint": the text is nowhere on the page, not merely out of the prompt. */
+  async expectTextAbsentFromPage(text: string): Promise<void> {
+    await expect(this.page.getByText(text, { exact: false })).toHaveCount(0);
+  }
+
+  async expectDirectionLabel(label: string): Promise<void> {
+    await expect(this.page.getByTestId('direction-label')).toContainText(label);
+  }
+
+  /** For a mixed session, where which of the two it is cannot be predicted. */
+  async expectDirectionLabelPresent(): Promise<void> {
+    await expect(this.page.getByTestId('direction-label')).toHaveText(/Face → Name|Name → Face/);
+  }
+
+  async expectPhotoOptionCount(count: number): Promise<void> {
+    await expect(this.page.getByTestId('photo-option')).toHaveCount(count);
+  }
+
+  async expectNameOptionCount(count: number): Promise<void> {
+    await expect(this.page.getByTestId('name-option')).toHaveCount(count);
+  }
+
+  async expectAnswerInputVisible(): Promise<void> {
+    await expect(this.page.getByTestId('answer-input')).toBeVisible();
+  }
+
+  async expectRevealedName(name: string): Promise<void> {
+    await expect(this.page.getByTestId('reveal-name')).toContainText(name);
+  }
+
+  async expectAnswerMarkedCorrect(correct: boolean): Promise<void> {
+    await expect(this.page.getByTestId('answer-feedback')).toHaveAttribute('data-correct', String(correct));
+  }
+
+  /** Reads the feedback line and fails if it uses any of the words the story rules out. */
+  async expectFeedbackFreeOfWords(words: string[]): Promise<void> {
+    const feedback = (await this.page.getByTestId('answer-feedback').innerText()).toLowerCase();
+    for (const word of words) {
+      expect(feedback, `the reveal used "${word}": ${feedback}`).not.toContain(word.toLowerCase());
+    }
+  }
+
+  async expectRevealNameImageContains(text: string): Promise<void> {
+    await expect(this.page.getByTestId('reveal-name-image')).toContainText(text);
+  }
+
+  async expectRevealAssociationSceneContains(text: string): Promise<void> {
+    await expect(this.page.getByTestId('reveal-association-scene')).toContainText(text);
+  }
+
+  /** Exactly one option is flagged as the answer, and it is the contact asked about. */
+  async expectPhotoOptionMarkedCorrect(contactId: string): Promise<void> {
+    const marked = this.page.locator('[data-testid="photo-option"][data-correct="true"]');
+    await expect(marked).toHaveCount(1);
+    await expect(marked).toHaveAttribute('data-contact-id', contactId);
+  }
+
+  async expectRatingButtonsVisible(): Promise<void> {
+    for (const rating of ['forgot', 'hard', 'good', 'easy']) {
+      await expect(this.page.getByTestId(`rating-${rating}`)).toBeVisible();
+    }
+  }
+
+  async expectRatingButtonContains(rating: string, text: string): Promise<void> {
+    await expect(this.page.getByTestId(`rating-${rating}`)).toContainText(text);
+  }
+
+  async expectRatingExplainerVisible(): Promise<void> {
+    await expect(this.page.getByTestId('rating-explainer')).toBeVisible();
+  }
+
+  async expectRatingExplainerNotVisible(): Promise<void> {
+    await expect(this.page.getByTestId('rating-explainer')).toHaveCount(0);
+  }
+
+  async expectRatingHelpVisible(): Promise<void> {
+    await expect(this.page.getByTestId('rating-help')).toBeVisible();
+  }
+
+  async expectQuestionProgress(current: number, total: number): Promise<void> {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    await expect(this.page.getByTestId('question-progress')).toHaveText(`${pad(current)} / ${pad(total)}`);
+  }
+
+  async expectSessionSummaryVisible(): Promise<void> {
+    await expect(this.page.getByTestId('session-summary')).toBeVisible();
+  }
+
+  async expectSummaryDirectionCount(direction: string, count: number): Promise<void> {
+    await expect(this.page.getByTestId(`summary-${direction}`)).toContainText(String(count));
+  }
+
+  async expectSummaryRowCount(count: number): Promise<void> {
+    await expect(this.page.getByTestId('summary-row')).toHaveCount(count);
+  }
+
+  async expectSummaryRowForContact(name: string): Promise<void> {
+    await expect(this.page.getByTestId('summary-row').filter({ hasText: name })).toBeVisible();
+  }
+
+  /** The schedule column is only meaningful when it holds a date rather than the em dash placeholder. */
+  async expectSummaryRowHasNextReview(name: string): Promise<void> {
+    const row = this.page.getByTestId('summary-row').filter({ hasText: name });
+    await expect(row.getByTestId('summary-next-review')).not.toHaveText('—');
+  }
+
+  async expectSkipOptionVisible(): Promise<void> {
+    await expect(this.page.getByTestId('skip-quiz-btn')).toBeVisible();
+  }
+
+  async expectSkipOptionNotVisible(): Promise<void> {
+    await expect(this.page.getByTestId('skip-quiz-btn')).toHaveCount(0);
+  }
+
+  async expectQuizEmptyState(): Promise<void> {
+    await expect(this.page.getByTestId('quiz-empty-state')).toBeVisible();
+  }
+
+  /** Reads the review history back from the API — the durable record, not the screen. */
+  async readReviewHistory(contactId: string): Promise<{ rating: string; answeredAt: string; lapse: boolean }[]> {
+    const res = await this.page.request.get(`${BACKEND_URL}/quiz/history/${contactId}`);
+    if (!res.ok()) return [];
+    return (await res.json()) as { rating: string; answeredAt: string; lapse: boolean }[];
+  }
+
+  async readDueCountViaApi(): Promise<number> {
+    const res = await this.page.request.get(`${BACKEND_URL}/dashboard/metrics`);
+    const metrics = (await res.json()) as { cardsDue: number };
+    return metrics.cardsDue;
+  }
+
+  // ── Upcoming reviews ─────────────────────────────────────────────────────────
+
+  async navigateToUpcomingReviews(): Promise<void> {
+    await this.ensureAuthenticatedSession();
+    await this.page.goto('/reviews/upcoming');
+  }
+
+  async clickUpcomingDayAtPosition(position: number): Promise<void> {
+    await this.page.getByTestId('upcoming-day-header').nth(position - 1).click();
+  }
+
+  async expectUpcomingDayCount(count: number): Promise<void> {
+    await expect(this.page.getByTestId('upcoming-day')).toHaveCount(count);
+  }
+
+  async expectUpcomingListContains(text: string): Promise<void> {
+    await expect(this.page.getByTestId('upcoming-list')).toContainText(text);
+  }
+
+  async expectUpcomingListDoesNotContain(text: string): Promise<void> {
+    await expect(this.page.getByTestId('upcoming-list')).not.toContainText(text);
+  }
+
+  async expectUpcomingDayContactRow(name: string): Promise<void> {
+    await expect(this.page.getByTestId('upcoming-contact-row').filter({ hasText: name })).toBeVisible();
+  }
+
+  async expectUpcomingEmptyState(): Promise<void> {
+    await expect(this.page.getByTestId('upcoming-empty')).toBeVisible();
+  }
+
+  async expectOnUpcomingPage(): Promise<void> {
+    await this.page.waitForURL(/\/reviews\/upcoming/);
+  }
+
+  // ── Reminders ────────────────────────────────────────────────────────────────
+
+  async navigateToReminderSettings(): Promise<void> {
+    await this.ensureAuthenticatedSession();
+    await this.page.goto('/settings/notifications');
+  }
+
+  async expectOnReminderSettingsPage(): Promise<void> {
+    await this.page.waitForURL(/\/settings\/notifications/);
+  }
+
+  /**
+   * These all wait for their own save to land before returning: every control here
+   * writes straight through, and a following step that navigates away — or runs the
+   * reminder sweep — would otherwise race a request still in flight.
+   *
+   * The settle signal is the save *counter*, not the presence of the "Saved" marker.
+   * The marker never goes away once shown, so after the first save merely waiting for
+   * it to be visible returns instantly and proves nothing about the current write.
+   */
+  async setRemindersEnabled(enabled: boolean): Promise<void> {
+    await this.setCheckboxState(this.page.getByTestId('reminders-toggle'), enabled);
+  }
+
+  async setReminderTime(value: string): Promise<void> {
+    const before = await this.readSaveCount();
+    await this.page.getByTestId('reminder-time').fill(value);
+    await this.expectSaveLandedAfter(before);
+  }
+
+  private async readSaveCount(): Promise<number> {
+    const marker = this.page.getByTestId('settings-saved');
+    if ((await marker.count()) === 0) return 0;
+    return Number(await marker.getAttribute('data-save-count')) || 0;
+  }
+
+  private async expectSaveLandedAfter(before: number): Promise<void> {
+    await expect.poll(() => this.readSaveCount()).toBeGreaterThan(before);
+  }
+
+  async setChannelEnabled(channel: string, enabled: boolean): Promise<void> {
+    await this.setCheckboxState(this.page.getByTestId(`channel-${channel}`), enabled);
+  }
+
+  /**
+   * Drives a checkbox to a state rather than toggling it. Playwright's check()/uncheck()
+   * are no-ops when the box already holds the target value — no change event, so no save,
+   * so waiting for the "Saved" marker would hang on a setting that was already correct.
+   * A caller asking for a state it already has has nothing to wait for.
+   */
+  private async setCheckboxState(box: Locator, enabled: boolean): Promise<void> {
+    if ((await box.isChecked()) === enabled) return;
+    const before = await this.readSaveCount();
+    // click(), not check()/uncheck(): those re-read the box afterwards and fail if the
+    // state has not settled yet. The save counter below is the real confirmation, and
+    // the desired state is asserted once the write has actually landed.
+    await box.click();
+    await this.expectSaveLandedAfter(before);
+    await expect(box).toBeChecked({ checked: enabled });
+  }
+
+  async expectRemindersToggleState(enabled: boolean): Promise<void> {
+    const toggle = this.page.getByTestId('reminders-toggle');
+    if (enabled) await expect(toggle).toBeChecked();
+    else await expect(toggle).not.toBeChecked();
+  }
+
+  async expectReminderTimeValue(value: string): Promise<void> {
+    await expect(this.page.getByTestId('reminder-time')).toHaveValue(value);
+  }
+
+  /** Matches an IANA zone name or the UTC fallback, rather than pinning the runner's own. */
+  async expectReminderTimezoneShown(): Promise<void> {
+    await expect(this.page.getByTestId('reminder-timezone')).toHaveText(/^([A-Za-z_]+\/[A-Za-z_+\-0-9\/]+|UTC)$/);
+  }
+
+  /**
+   * Runs the reminder sweep on demand. Production runs the identical sweep on an
+   * EventBridge schedule (see functions/notifications/handler.ts) — driving it through
+   * its HTTP entry point is what lets a spec observe the outcome without waiting for a
+   * scheduler tick.
+   */
+  async runReminderSweepViaApi(): Promise<void> {
+    const res = await this.page.request.post(`${BACKEND_URL}/notifications/dispatch`);
+    if (!res.ok()) throw new Error(`The reminder sweep failed: ${res.status()}`);
+  }
+
+  async readNotificationsViaApi(): Promise<{ id: string; message: string; link: string }[]> {
+    const res = await this.page.request.get(`${BACKEND_URL}/notifications`);
+    if (!res.ok()) return [];
+    return (await res.json()) as { id: string; message: string; link: string }[];
+  }
+
+  async expectReviewReminderVisible(): Promise<void> {
+    await expect(this.page.getByTestId('review-reminder').first()).toBeVisible();
+  }
+
+  async expectReviewReminderNotVisible(): Promise<void> {
+    await expect(this.page.getByTestId('review-reminder')).toHaveCount(0);
+  }
+
+  async expectReviewReminderContains(text: string): Promise<void> {
+    await expect(this.page.getByTestId('review-reminder').first()).toContainText(text);
+  }
+
+  async clickReviewReminder(): Promise<void> {
+    await this.page.getByTestId('review-reminder').first().click();
+  }
+
+  /** page.request for the same reason as resetTutorialProgress — clean the active profile. */
+  async deleteAllNotifications(): Promise<void> {
+    assertLocalTarget('deleteAllNotifications');
+    await this.page.request.delete(`${BACKEND_URL}/notifications`);
+  }
+
+  /** Returns preferences to their shipped defaults, so one spec's overrides can't leak into the next. */
+  async resetUserSettings(): Promise<void> {
+    assertLocalTarget('resetUserSettings');
+    await this.page.request.put(`${BACKEND_URL}/settings`, {
+      data: {
+        quizMode: 'mixed',
+        quizAnswerFormat: 'choice',
+        ratingExplainerSeen: false,
+        remindersEnabled: false,
+        reminderHour: 9,
+        reminderMinute: 0,
+        reminderTimezone: 'UTC',
+        reminderChannels: ['in-app'],
+      },
+    });
   }
 }

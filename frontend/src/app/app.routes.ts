@@ -32,6 +32,18 @@ export const routes: Routes = [
       import('./pages/quiz/quiz.component').then((m) => m.QuizComponent),
   },
   {
+    path: 'reviews/upcoming',
+    canActivate: [profileGuard],
+    loadComponent: () =>
+      import('./pages/reviews/upcoming-reviews.component').then((m) => m.UpcomingReviewsComponent),
+  },
+  {
+    path: 'settings/notifications',
+    canActivate: [profileGuard],
+    loadComponent: () =>
+      import('./pages/settings/notification-settings.component').then((m) => m.NotificationSettingsComponent),
+  },
+  {
     path: 'teach',
     canActivate: [profileGuard],
     loadComponent: () =>

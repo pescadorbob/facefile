@@ -1,12 +1,20 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { ddb, tableName } from '../_shared/dynamo';
+import { contactsRepo } from '../_shared/contactsRepo';
 import { errorResponse, json, preflight } from '../_shared/http';
+import { quizResultsRepo } from '../_shared/quizResultsRepo';
+import { reviewCardsRepo } from '../_shared/reviewCardsRepo';
 import { resolveUserId } from '../_shared/session';
+import { buildUpcomingReviews, DEFAULT_HORIZON_DAYS } from '../_shared/upcomingReviews';
+import { userSettingsRepo } from '../_shared/userSettingsRepo';
 
-// Direct port of backend/src/routes/dashboard.js. Prisma's `.count()` becomes
-// a DynamoDB Query with Select: 'COUNT' — cheaper than fetching full items
-// just to measure `.length`, same as the SQL COUNT(*) it replaces.
+/**
+ * Descended from backend/src/routes/dashboard.js. The counts are unchanged; E-4.6
+ * added `nextReviewAt` (so a caught-up dashboard can say when the next review lands
+ * rather than only that there are none) and the `/upcoming` view.
+ *
+ *   GET /dashboard/metrics   the tile counts
+ *   GET /dashboard/upcoming  reviews grouped by day for the next 14 days
+ */
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   if (event.httpMethod === 'OPTIONS') return preflight();
 
@@ -14,6 +22,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     if (event.httpMethod === 'GET' && sub === '/metrics') return await metrics(resolveUserId(event));
+    if (event.httpMethod === 'GET' && sub === '/upcoming') {
+      const days = Number(event.queryStringParameters?.days ?? DEFAULT_HORIZON_DAYS);
+      return await upcoming(resolveUserId(event), Number.isInteger(days) && days > 0 ? days : DEFAULT_HORIZON_DAYS);
+    }
     return json(404, { error: 'Not found' });
   } catch (err) {
     return errorResponse(err);
@@ -21,37 +33,41 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 };
 
 async function metrics(userId: string): Promise<APIGatewayProxyResult> {
-  const [peopleAdded, cardsDue, totalQuizAnswers, correctQuizAnswers] = await Promise.all([
-    countByUser(tableName('CONTACTS_TABLE_NAME'), userId),
-    countByUser(tableName('REVIEW_CARDS_TABLE_NAME'), userId, {
-      filter: 'nextReviewAt <= :now',
-      values: { ':now': new Date().toISOString() },
-    }),
-    countByUser(tableName('QUIZ_RESULTS_TABLE_NAME'), userId),
-    countByUser(tableName('QUIZ_RESULTS_TABLE_NAME'), userId, {
-      filter: 'quality >= :minQuality',
-      values: { ':minQuality': 3 },
-    }),
+  const now = new Date();
+  const [peopleAdded, cards, totalQuizAnswers, correctQuizAnswers] = await Promise.all([
+    contactsRepo.countByUser(userId),
+    // Fetched rather than counted: the same read yields both the due count and the
+    // earliest upcoming review, so a second query would buy nothing.
+    reviewCardsRepo.findAllByUser(userId),
+    quizResultsRepo.countByUser(userId),
+    quizResultsRepo.countByUser(userId, { minQuality: 3 }),
   ]);
 
+  const nowIso = now.toISOString();
+  const cardsDue = cards.filter((card) => card.nextReviewAt <= nowIso).length;
+  const nextReviewAt = cards.map((card) => card.nextReviewAt).sort()[0] ?? null;
   const accuracyPercentage = totalQuizAnswers === 0 ? null : Math.round((100 * correctQuizAnswers) / totalQuizAnswers);
 
-  return json(200, { peopleAdded, cardsDue, totalQuizAnswers, accuracyPercentage });
+  return json(200, { peopleAdded, cardsDue, totalQuizAnswers, accuracyPercentage, nextReviewAt });
 }
 
-async function countByUser(
-  table: string,
-  userId: string,
-  extra?: { filter: string; values: Record<string, unknown> },
-): Promise<number> {
-  const res = await ddb.send(
-    new QueryCommand({
-      TableName: table,
-      Select: 'COUNT',
-      KeyConditionExpression: 'userId = :userId',
-      FilterExpression: extra?.filter,
-      ExpressionAttributeValues: { ':userId': userId, ...extra?.values },
+async function upcoming(userId: string, horizonDays: number): Promise<APIGatewayProxyResult> {
+  const [contacts, cards, settings] = await Promise.all([
+    contactsRepo.findAllByUser(userId),
+    reviewCardsRepo.findAllByUser(userId),
+    // Days are grouped in the user's own timezone — the same one their reminders use —
+    // so "Thursday" means the same thing in both places.
+    userSettingsRepo.findByUser(userId),
+  ]);
+
+  return json(
+    200,
+    buildUpcomingReviews({
+      contacts: contacts.map((contact) => ({ id: contact.id, name: contact.name, photoPath: contact.photoPath })),
+      cards: cards.map((card) => ({ contactId: card.contactId, nextReviewAt: card.nextReviewAt })),
+      now: new Date(),
+      timeZone: settings.reminderTimezone,
+      horizonDays,
     }),
   );
-  return res.Count ?? 0;
 }

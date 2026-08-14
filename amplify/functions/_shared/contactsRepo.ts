@@ -1,6 +1,10 @@
-import { BatchWriteCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { BatchWriteCommand, GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
 import { ddb, tableName } from './dynamo';
 import { newId } from './ids';
+import type { ReviewCardRecord } from './reviewCardsRepo';
+import { DEFAULT_CARD_STATE } from './sm2';
+
+export type { ReviewCardRecord };
 
 const CONTACTS_TABLE = () => tableName('CONTACTS_TABLE_NAME');
 const REVIEW_CARDS_TABLE = () => tableName('REVIEW_CARDS_TABLE_NAME');
@@ -16,17 +20,6 @@ export interface ContactRecord {
   locusId: string | null;
   nameImage: string | null;
   associationScene: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ReviewCardRecord {
-  userId: string;
-  contactId: string;
-  easeFactor: number;
-  interval: number;
-  repetitions: number;
-  nextReviewAt: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,15 +52,32 @@ export const contactsRepo = {
     return ((res.Items ?? []) as ContactRecord[]).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   },
 
+  async countByUser(userId: string): Promise<number> {
+    const res = await ddb.send(
+      new QueryCommand({
+        TableName: CONTACTS_TABLE(),
+        Select: 'COUNT',
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':userId': userId },
+      }),
+    );
+    return res.Count ?? 0;
+  },
+
+  async findById(userId: string, id: string): Promise<ContactRecord | null> {
+    const res = await ddb.send(new GetCommand({ TableName: CONTACTS_TABLE(), Key: { userId, id } }));
+    return (res.Item as ContactRecord | undefined) ?? null;
+  },
+
   async create(input: CreateContactInput): Promise<{ contact: ContactRecord; reviewCard: ReviewCardRecord }> {
     const now = nowIso();
     const contact: ContactRecord = { ...input, id: newId(), createdAt: now, updatedAt: now };
+    // nextReviewAt = now, so a new contact is immediately due — that's what makes the
+    // post-add quiz (E-4.8) and the dashboard's due badge light up straight away.
     const reviewCard: ReviewCardRecord = {
       userId: input.userId,
       contactId: contact.id,
-      easeFactor: 2.5,
-      interval: 0,
-      repetitions: 0,
+      ...DEFAULT_CARD_STATE,
       nextReviewAt: now,
       createdAt: now,
       updatedAt: now,

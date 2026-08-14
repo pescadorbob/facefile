@@ -5,6 +5,9 @@ import { DslContext } from '../support/dsl-context';
 import { isLocalTarget } from '../support/target';
 
 export { confirmThat } from '../facefile/facefile.dsl-assert';
+// Type only, so a spec that factors a shared GIVEN into a local helper can name its
+// parameter without reaching past the fixtures for it.
+export type { FacefileDsl } from '../facefile/facefile.dsl';
 
 type FacefileFixtures = {
   driver: FacefileBrowserDriver;
@@ -27,6 +30,11 @@ export const test = base.extend<FacefileFixtures>({
 
       await driver.resetTutorialProgress();
       await driver.deleteAllContacts();
+      // Reminders and preferences belong to the shared default profile too, so a spec
+      // that enabled reminders or dismissed the rating explainer must hand the next one
+      // back a clean slate.
+      await driver.deleteAllNotifications();
+      await driver.resetUserSettings();
       // Before the users are deactivated — the palaces belong to them, and the lookup
       // this does goes through the still-active profile's session.
       await driver.deleteTrackedPalaces();

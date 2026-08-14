@@ -13,16 +13,18 @@ frontend/ (Angular 21, port 4200)
 
 amplify/ (Amplify Gen 2 — CDK-based)
   ├── backend.ts            — DynamoDB tables, S3 bucket, Lambda functions, API Gateway REST API, all wired together
-  ├── functions/<name>/     — one Lambda per API Gateway resource mount (session, tutorial, palaces, contacts, admin-users, dashboard)
+  ├── functions/<name>/     — one Lambda per API Gateway resource mount (session, tutorial, palaces, contacts, admin-users, dashboard, quiz, settings, notifications)
   ├── functions/_shared/    — repositories, services, session/cors/http helpers shared across functions via relative imports
   └── seed.ts               — seeds the one DEFAULT_USER_ID stub user + starter palaces/loci (run after first deploy)
 ```
 
 **Core data flow for quizzing:**
 
-1. `Contact` is created (`POST /contacts`) → a `ReviewCard` is created alongside it in the same call, with SM-2 defaults
-2. Dashboard metrics (`GET /dashboard/metrics`) report `cardsDue` — `ReviewCard`s where `nextReviewAt <= now`
-3. `QuizResult` rows would record every answer for stats — **note**: no route currently submits quiz answers (there is no `POST /quiz/answer` today; `functions/_shared/sm2.ts` is ported but not yet wired to any handler — this was already true of the pre-migration Express app, not something this migration changed)
+1. `Contact` is created (`POST /contacts`) → a `ReviewCard` is created alongside it in the same call, with SM-2 defaults and `nextReviewAt = now`, so a new contact is due immediately
+2. `GET /quiz/session` assembles a session — due-only or practice-all, Face → Name / Name → Face / mixed — with distractors drawn from the user's own contacts (`functions/_shared/quizSession.ts`, a pure builder)
+3. `POST /quiz/answer` records one `QuizResult` and reschedules the `ReviewCard` through `functions/_shared/sm2.ts` in the same call
+4. Dashboard metrics (`GET /dashboard/metrics`) report `cardsDue` — `ReviewCard`s where `nextReviewAt <= now` — plus `nextReviewAt`; `GET /dashboard/upcoming` groups the next 14 days
+5. `POST /notifications/dispatch` (and the EventBridge schedule on the same Lambda) sweeps for users with reviews due and delivers a reminder
 
 ---
 
@@ -105,11 +107,15 @@ Users              PK id                          (GSI byEmail: PK email)
 Palaces            PK userId, SK id                — loci are an embedded ordered list on the item, not a table
 Contacts           PK userId, SK id
 ReviewCards        PK userId, SK contactId          — 1:1 with Contact, created alongside it
-QuizResults        PK userId, SK id
+QuizResults        PK userId, SK id                 — one row per answered question (the review history)
 TutorialProgress   PK userId                        — single item per user
+UserSettings       PK userId                        — single item: quiz defaults + reminder schedule
+Notifications      PK userId, SK id                 — delivered reminders; also *is* the in-app channel
 ```
 
 Every table is partitioned by `userId` (list-by-user is the only access pattern any route needs today) except `Users`, which is looked up by its own `id` (login) or by `email` via the `byEmail` GSI (admin user management's uniqueness check).
+
+`UserSettings` is the one exception to list-by-user: the reminder sweep needs every user's schedule at once and Scans it. Only users who have opened notification settings have a row at all, so the table is small by construction, and a GSI whose only purpose was to be scanned would buy nothing.
 
 Two Prisma models from the old schema were **deliberately not carried over** as their own tables, because no route ever queried them independently:
 - **`Locus`** — always read nested under its `Palace` (Prisma's `include: { loci }`), so it's an embedded list on the `Palace` item instead.
@@ -126,6 +132,7 @@ No `.env` file — Amplify Gen 2 backends configure via `backend.ts` + Amplify-m
 - **`SESSION_COOKIE_SECRET`** — set per sandbox with `npx ampx sandbox secret set SESSION_COOKIE_SECRET` (from the repo root), or via the Amplify Console's Secrets UI for deployed branches. Referenced in code via `secret('SESSION_COOKIE_SECRET')` in each function's `resource.ts`.
 - **`FRONTEND_URL`** — read from the `FRONTEND_URL` process env var at CDK synth time in `backend.ts` (defaults to `http://localhost:4200`), used for both CORS and the S3 bucket's CORS policy. Set this to the real Amplify Hosting domain for deployed environments.
 - Table names, the photos bucket name, and `DEFAULT_USER_ID` are wired automatically by `backend.ts` — nothing to configure by hand.
+- **Review reminders** need no configuration either. An EventBridge rule in `backend.ts` invokes the `notifications` Lambda every 15 minutes; that Lambda answers both the schedule (an event with no `httpMethod`) and `POST /notifications/dispatch`, so the sweep production runs unattended is the same one anything else can trigger. Only the `in-app` channel is implemented — it writes the `Notifications` row the dashboard reads. Email/push would be a delivery adapter in `_shared/reminderService.ts`, not a change to the scheduling rules.
 
 After changing DynamoDB table shape/GSIs in `amplify/backend.ts`, just redeploy (`ampx sandbox` picks up the change and hot-swaps or falls back to a full stack update as needed) — there is no separate migration step like Prisma's `db:migrate`.
 

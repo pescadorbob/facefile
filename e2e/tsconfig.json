@@ -10,5 +10,7 @@
     "types": ["node"]
   },
   "include": ["./**/*.ts"],
-  "exclude": ["dist", "node_modules"]
+  // `unit/` imports the backend's pure modules from ../amplify, which sits outside this
+  // rootDir. Those specs are governed by tsconfig.jest.json (rootDir "..") instead.
+  "exclude": ["dist", "node_modules", "unit"]
 }

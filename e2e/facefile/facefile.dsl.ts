@@ -348,6 +348,172 @@ export class FacefileDsl {
     await this.driver.createContactViaApi(name);
   }
 
+  /**
+   * A contact complete enough to be quizzed either way round: a face to recognise and
+   * the encoding cues the reveal screen shows back. Name → Face questions cannot be
+   * built from contacts without photos, so any spec touching that direction needs this.
+   */
+  async registersFullyEncodedContact(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.createContactViaApi(name, {
+      withPhoto: true,
+      nameImage: `a marquee tent for ${name}`,
+      associationScene: `${name} juggling on the coat rack`,
+    });
+  }
+
+  async registersFullyEncodedContacts(namesParam: string): Promise<void> {
+    for (const name of parseListParam(namesParam, 'names')) {
+      await this.registersFullyEncodedContact(`name: ${name}`);
+    }
+  }
+
+  /**
+   * Answers a contact's card outright, which is how a card stops being due — a
+   * successful recall pushes its next review at least a day out. Used as a GIVEN
+   * when a spec needs a contact that exists but is not due yet.
+   */
+  async completesReviewFor(nameParam: string, ratingParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    const rating = parseParam(ratingParam, 'rating');
+    await this.driver.submitQuizAnswerViaApi(await this.driver.findContactIdByName(name), rating);
+  }
+
+  async startsReviewFromDueCount(): Promise<void> {
+    await this.driver.clickDueReviewTile();
+  }
+
+  async opensUpcomingReviewsFromDashboard(): Promise<void> {
+    await this.driver.clickUpcomingLink();
+  }
+
+  async opensReminderSettingsFromDashboard(): Promise<void> {
+    await this.driver.clickRemindersLink();
+  }
+
+  // ── Quiz sessions ────────────────────────────────────────────────────────────
+
+  async opensTheQuiz(): Promise<void> {
+    await this.driver.navigateToQuiz();
+  }
+
+  /** The prompt shown straight after saving a contact (E-4.8). */
+  async isPromptedToQuiz(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.navigateToQuizForContact(await this.driver.findContactIdByName(name));
+  }
+
+  async choosesSessionType(typeParam: string): Promise<void> {
+    await this.driver.clickModeOption(parseParam(typeParam, 'type'));
+  }
+
+  async choosesAnswerFormat(formatParam: string): Promise<void> {
+    await this.driver.clickAnswerFormatOption(parseParam(formatParam, 'format'));
+  }
+
+  async startsDueReviewSession(): Promise<void> {
+    await this.driver.clickReviewDueButton();
+  }
+
+  async startsPracticeAllSession(): Promise<void> {
+    await this.driver.clickPracticeAllButton();
+  }
+
+  async answersWithTheName(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.fillAnswerInput(name);
+    await this.driver.clickSubmitAnswer();
+  }
+
+  async answersWithAName(nameParam: string): Promise<void> {
+    await this.driver.fillAnswerInput(parseParam(nameParam, 'name'));
+    await this.driver.clickSubmitAnswer();
+  }
+
+  async picksTheNameOf(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.clickNameOptionByText(name);
+  }
+
+  async picksThePhotoOf(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.clickPhotoOptionForContact(await this.driver.findContactIdByName(name));
+  }
+
+  async picksAPhotoOtherThan(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.clickPhotoOptionOtherThan(await this.driver.findContactIdByName(name));
+  }
+
+  async ratesRecall(ratingParam: string): Promise<void> {
+    await this.driver.clickRatingButton(parseParam(ratingParam, 'rating'));
+  }
+
+  async dismissesRatingExplainer(): Promise<void> {
+    await this.driver.clickDismissExplainer();
+  }
+
+  async opensRatingExplanation(): Promise<void> {
+    await this.driver.clickRatingHelp();
+  }
+
+  async skipsTheQuiz(): Promise<void> {
+    await this.driver.clickSkipQuiz();
+  }
+
+  async finishesTheSession(): Promise<void> {
+    await this.driver.clickFinishSession();
+  }
+
+  // ── Upcoming reviews ─────────────────────────────────────────────────────────
+
+  async opensUpcomingReviews(): Promise<void> {
+    await this.driver.navigateToUpcomingReviews();
+  }
+
+  async opensTheDayAtPosition(positionParam: string): Promise<void> {
+    await this.driver.clickUpcomingDayAtPosition(parseInt(parseParam(positionParam, 'position'), 10));
+  }
+
+  // ── Review reminders ─────────────────────────────────────────────────────────
+
+  async opensReminderSettings(): Promise<void> {
+    await this.driver.navigateToReminderSettings();
+  }
+
+  async enablesReminders(): Promise<void> {
+    await this.driver.setRemindersEnabled(true);
+  }
+
+  async disablesReminders(): Promise<void> {
+    await this.driver.setRemindersEnabled(false);
+  }
+
+  /** Times are wall-clock strings the user types, never aliased. */
+  async setsReminderTime(timeParam: string): Promise<void> {
+    await this.driver.setReminderTime(parseParam(timeParam, 'time'));
+  }
+
+  async turnsOffEveryReminderChannel(): Promise<void> {
+    await this.driver.setChannelEnabled('in-app', false);
+  }
+
+  async turnsOnTheInAppReminderChannel(): Promise<void> {
+    await this.driver.setChannelEnabled('in-app', true);
+  }
+
+  /**
+   * Runs the reminder sweep the schedule would otherwise run unattended. Same code
+   * path, driven on demand so a spec can assert on the outcome.
+   */
+  async theReminderSweepRuns(): Promise<void> {
+    await this.driver.runReminderSweepViaApi();
+  }
+
+  async opensTheReviewReminder(): Promise<void> {
+    await this.driver.clickReviewReminder();
+  }
+
   async startsQuizFromBanner(): Promise<void> {
     await this.driver.clickStartQuizBanner();
   }

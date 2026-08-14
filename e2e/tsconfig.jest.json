@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true
+  },
+  "include": ["./unit/**/*.ts", "./support/**/*.ts", "../amplify/functions/_shared/**/*.ts"]
+}

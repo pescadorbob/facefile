@@ -524,7 +524,10 @@ export class AddPersonComponent implements OnInit {
       associationScene: this.associationScene(),
       photo:            this.photoFile(),
     }).subscribe({
-      next:  () => this.router.navigate(['/quiz']),
+      // Straight into a one-question quiz on the person just saved — the retrieval
+      // attempt has to land inside the window where the face is still in working
+      // memory (E-4.8), so there is no interstitial between saving and being asked.
+      next:  contact => this.router.navigate(['/quiz'], { queryParams: { contactId: contact.id } }),
       error: () => this.saving.set(false),
     });
   }

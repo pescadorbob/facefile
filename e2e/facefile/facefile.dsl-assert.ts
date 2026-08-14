@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { parseListParam, parseParam } from '../support/parse-param';
 import { FacefileDsl } from './facefile.dsl';
 
@@ -247,6 +248,16 @@ export class FacefileDslAssert {
     await this.dsl.driver.expectCardsDueCount(count);
   }
 
+  /**
+   * The same assertion, but allowed the dashboard's own refresh interval to get there —
+   * for cards that fall due (or get cleared) while the user is sitting on the page and
+   * never reloads it (S-4.6.1).
+   */
+  async seesCardsDueCountEventually(countParam: string): Promise<void> {
+    const count = parseInt(parseParam(countParam, 'count'), 10);
+    await this.dsl.driver.expectCardsDueCountEventually(count);
+  }
+
   async seesDueTileHighlighted(): Promise<void> {
     await this.dsl.driver.expectDueTileHighlighted();
   }
@@ -319,6 +330,293 @@ export class FacefileDslAssert {
 
   async seesMeetingsLink(): Promise<void> {
     await this.dsl.driver.expectMeetingsLinkVisible();
+  }
+
+  async seesCaughtUpMessage(): Promise<void> {
+    await this.dsl.driver.expectCaughtUpMessageVisible();
+  }
+
+  async doesNotSeeCaughtUpMessage(): Promise<void> {
+    await this.dsl.driver.expectCaughtUpMessageNotVisible();
+  }
+
+  async seesNextDueDateOnDashboard(): Promise<void> {
+    await this.dsl.driver.expectNextDueDateVisible();
+  }
+
+  // ── Quiz sessions ────────────────────────────────────────────────────────────
+
+  async seesDueContactCount(countParam: string): Promise<void> {
+    await this.dsl.driver.expectDueCountText(parseInt(parseParam(countParam, 'count'), 10));
+  }
+
+  async seesReviewDueOption(): Promise<void> {
+    await this.dsl.driver.expectReviewDueButtonVisible();
+  }
+
+  async doesNotSeeReviewDueOption(): Promise<void> {
+    await this.dsl.driver.expectReviewDueButtonNotVisible();
+  }
+
+  async seesPracticeAllOption(): Promise<void> {
+    await this.dsl.driver.expectPracticeAllButtonVisible();
+  }
+
+  async seesNextDueDateWithCountdown(): Promise<void> {
+    await this.dsl.driver.expectNextDuePanelVisible();
+  }
+
+  async seesSessionTypeSelected(typeParam: string): Promise<void> {
+    await this.dsl.driver.expectModeSelected(parseParam(typeParam, 'type'));
+  }
+
+  async seesQuizDirection(directionParam: string): Promise<void> {
+    const direction = parseParam(directionParam, 'direction');
+    await this.dsl.driver.expectDirectionLabel(direction === 'face-to-name' ? 'Face → Name' : 'Name → Face');
+  }
+
+  /** In a mixed session the direction of any given card is not knowable in advance. */
+  async seesAnyQuizDirection(): Promise<void> {
+    await this.dsl.driver.expectDirectionLabelPresent();
+  }
+
+  /** The photo is on the card and the name appears nowhere on it (S-4.1.1). */
+  async seesPhotoWithNoNameHint(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectPhotoPromptVisible();
+    await this.dsl.driver.expectNamePromptNotVisible();
+    await this.dsl.driver.expectTextAbsentFromPage(name);
+  }
+
+  async seesNamePrompt(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectNamePromptContains(name);
+  }
+
+  async seesPhotoOptions(countParam: string): Promise<void> {
+    await this.dsl.driver.expectPhotoOptionCount(parseInt(parseParam(countParam, 'count'), 10));
+  }
+
+  async seesNameOptions(countParam: string): Promise<void> {
+    await this.dsl.driver.expectNameOptionCount(parseInt(parseParam(countParam, 'count'), 10));
+  }
+
+  async seesNameEntryField(): Promise<void> {
+    await this.dsl.driver.expectAnswerInputVisible();
+  }
+
+  async seesRevealedName(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectRevealedName(name);
+  }
+
+  async seesPositiveConfirmation(): Promise<void> {
+    await this.dsl.driver.expectAnswerMarkedCorrect(true);
+  }
+
+  async seesAnswerMarkedIncorrect(): Promise<void> {
+    await this.dsl.driver.expectAnswerMarkedCorrect(false);
+  }
+
+  /** The reveal corrects without scolding (S-4.1.2). */
+  async seesNoNegativeLanguage(): Promise<void> {
+    await this.dsl.driver.expectFeedbackFreeOfWords(['wrong', 'incorrect', 'failed', 'no.']);
+  }
+
+  async seesEncodingCuesOnReveal(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectRevealNameImageContains(`marquee tent for ${name}`);
+    await this.dsl.driver.expectRevealAssociationSceneContains('coat rack');
+  }
+
+  async seesCorrectPhotoHighlighted(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectPhotoOptionMarkedCorrect(await this.dsl.driver.findContactIdByName(name));
+  }
+
+  async seesAllFourRatings(): Promise<void> {
+    await this.dsl.driver.expectRatingButtonsVisible();
+  }
+
+  async seesRatingDescription(ratingParam: string, textParam: string): Promise<void> {
+    await this.dsl.driver.expectRatingButtonContains(parseParam(ratingParam, 'rating'), parseParam(textParam, 'text'));
+  }
+
+  async seesRatingExplanation(): Promise<void> {
+    await this.dsl.driver.expectRatingExplainerVisible();
+  }
+
+  async doesNotSeeRatingExplanation(): Promise<void> {
+    await this.dsl.driver.expectRatingExplainerNotVisible();
+  }
+
+  async seesRatingHelpOption(): Promise<void> {
+    await this.dsl.driver.expectRatingHelpVisible();
+  }
+
+  async isOnQuestion(currentParam: string, totalParam: string): Promise<void> {
+    await this.dsl.driver.expectQuestionProgress(
+      parseInt(parseParam(currentParam, 'question'), 10),
+      parseInt(parseParam(totalParam, 'of'), 10),
+    );
+  }
+
+  async seesSessionSummary(): Promise<void> {
+    await this.dsl.driver.expectSessionSummaryVisible();
+  }
+
+  async seesSummaryCountFor(directionParam: string, countParam: string): Promise<void> {
+    await this.dsl.driver.expectSummaryDirectionCount(
+      parseParam(directionParam, 'direction'),
+      parseInt(parseParam(countParam, 'count'), 10),
+    );
+  }
+
+  async seesSummaryRows(countParam: string): Promise<void> {
+    await this.dsl.driver.expectSummaryRowCount(parseInt(parseParam(countParam, 'count'), 10));
+  }
+
+  async seesUpdatedNextReviewFor(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectSummaryRowForContact(name);
+    await this.dsl.driver.expectSummaryRowHasNextReview(name);
+  }
+
+  async seesSkipOption(): Promise<void> {
+    await this.dsl.driver.expectSkipOptionVisible();
+  }
+
+  async doesNotSeeSkipOption(): Promise<void> {
+    await this.dsl.driver.expectSkipOptionNotVisible();
+  }
+
+  async seesNothingToQuiz(): Promise<void> {
+    await this.dsl.driver.expectQuizEmptyState();
+  }
+
+  /**
+   * The durable record behind the rating (S-4.4.1, S-4.5.2). Polled rather than read
+   * once: the history is served by an eventually-consistent query, so a read issued
+   * immediately after the answer can legitimately not see it yet.
+   */
+  async seesReviewHistoryFor(nameParam: string, ratingParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    const rating = parseParam(ratingParam, 'rating');
+    const contactId = await this.dsl.driver.findContactIdByName(name);
+    await expect
+      .poll(async () => (await this.dsl.driver.readReviewHistory(contactId)).map(entry => entry.rating))
+      .toContain(rating);
+    const history = await this.dsl.driver.readReviewHistory(contactId);
+    expect(history.every(entry => Boolean(entry.answeredAt))).toBe(true);
+  }
+
+  async seesLapseLoggedFor(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    const contactId = await this.dsl.driver.findContactIdByName(name);
+    await expect
+      .poll(async () => (await this.dsl.driver.readReviewHistory(contactId)).some(entry => entry.lapse))
+      .toBe(true);
+  }
+
+  /** Nothing was answered for this contact at all — a skipped prompt records no attempt. */
+  async seesReviewHistoryIsEmptyFor(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    const history = await this.dsl.driver.readReviewHistory(await this.dsl.driver.findContactIdByName(name));
+    expect(history).toEqual([]);
+  }
+
+  async seesNoLapseLoggedFor(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    const history = await this.dsl.driver.readReviewHistory(await this.dsl.driver.findContactIdByName(name));
+    expect(history.some(entry => entry.lapse)).toBe(false);
+  }
+
+  async seesDueCountSettleAt(countParam: string): Promise<void> {
+    const expected = parseInt(parseParam(countParam, 'count'), 10);
+    await expect.poll(() => this.dsl.driver.readDueCountViaApi()).toBe(expected);
+  }
+
+  // ── Upcoming reviews ─────────────────────────────────────────────────────────
+
+  async isOnUpcomingScreen(): Promise<void> {
+    await this.dsl.driver.expectOnUpcomingPage();
+  }
+
+  async seesUpcomingDays(countParam: string): Promise<void> {
+    await this.dsl.driver.expectUpcomingDayCount(parseInt(parseParam(countParam, 'count'), 10));
+  }
+
+  async seesContactInUpcoming(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectUpcomingListContains(name);
+  }
+
+  async doesNotSeeContactInUpcoming(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectUpcomingListDoesNotContain(name);
+  }
+
+  async seesDayHoldsContacts(countParam: string): Promise<void> {
+    await this.dsl.driver.expectUpcomingListContains(`${parseParam(countParam, 'count')} contact`);
+  }
+
+  async seesContactListedForThatDay(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectUpcomingDayContactRow(name);
+  }
+
+  async seesNothingUpcoming(): Promise<void> {
+    await this.dsl.driver.expectUpcomingEmptyState();
+  }
+
+  // ── Review reminders ─────────────────────────────────────────────────────────
+
+  async isOnReminderSettingsScreen(): Promise<void> {
+    await this.dsl.driver.expectOnReminderSettingsPage();
+  }
+
+  async seesRemindersEnabled(): Promise<void> {
+    await this.dsl.driver.expectRemindersToggleState(true);
+  }
+
+  async seesRemindersDisabled(): Promise<void> {
+    await this.dsl.driver.expectRemindersToggleState(false);
+  }
+
+  async seesReminderTime(timeParam: string): Promise<void> {
+    await this.dsl.driver.expectReminderTimeValue(parseParam(timeParam, 'time'));
+  }
+
+  /** The zone the chosen time is read in — named on screen, whatever it happens to be. */
+  async seesReminderTimezone(): Promise<void> {
+    await this.dsl.driver.expectReminderTimezoneShown();
+  }
+
+  async seesReviewReminder(): Promise<void> {
+    await this.dsl.driver.expectReviewReminderVisible();
+  }
+
+  async doesNotSeeReviewReminder(): Promise<void> {
+    await this.dsl.driver.expectReviewReminderNotVisible();
+  }
+
+  async seesReminderStating(countParam: string): Promise<void> {
+    const count = parseParam(countParam, 'count');
+    await this.dsl.driver.expectReviewReminderContains(count);
+  }
+
+  async receivedNoReminder(): Promise<void> {
+    expect(await this.dsl.driver.readNotificationsViaApi()).toEqual([]);
+  }
+
+  async receivedAReminderLinkingToTheReviewSession(): Promise<void> {
+    const notifications = await this.dsl.driver.readNotificationsViaApi();
+    expect(notifications.length).toBeGreaterThan(0);
+    expect(notifications[0].link).toContain('/quiz');
+  }
+
+  async receivedExactlyOneReminder(): Promise<void> {
+    expect(await this.dsl.driver.readNotificationsViaApi()).toHaveLength(1);
   }
 }
 

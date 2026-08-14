@@ -1,8 +1,15 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Contact, ContactsService } from '../../services/contacts.service';
 import { DashboardMetrics, DashboardService } from '../../services/dashboard.service';
+import { Notification, NotificationsService } from '../../services/notifications.service';
 import { SessionService } from '../../services/session.service';
+
+/**
+ * How often the dashboard re-reads its metrics while the user is sitting on it, so a
+ * card that falls due mid-visit shows up without a manual refresh (S-4.6.1).
+ */
+const METRICS_REFRESH_MS = 15_000;
 
 @Component({
   selector: 'app-dashboard',
@@ -28,6 +35,14 @@ import { SessionService } from '../../services/session.service';
         <p class="flex-1 truncate" style="font-family:'Playfair Display',serif;font-size:16px;color:var(--fg)">
           FaceFile
         </p>
+        <button (click)="goToUpcoming()" data-testid="upcoming-link"
+          style="background:none;border:none;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--muted)">
+          Upcoming
+        </button>
+        <button (click)="goToReminders()" data-testid="reminders-link"
+          style="background:none;border:none;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--muted)">
+          Reminders
+        </button>
         <button (click)="goToAdmin()"
           style="background:none;border:none;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.04em;color:var(--muted)">
           Admin
@@ -52,7 +67,8 @@ import { SessionService } from '../../services/session.service';
                 <p class="text-xs uppercase tracking-widest mb-1" style="font-family:'DM Mono',monospace;color:var(--muted)">People added</p>
                 <p style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--fg)">{{ m.peopleAdded }}</p>
               </div>
-              <div class="border px-4 py-3" data-testid="due-review-tile"
+              <!-- Tapping the count starts a session with the due cards pre-loaded (S-4.6.1). -->
+              <button (click)="goToDueQuiz()" class="border px-4 py-3 text-left" data-testid="due-review-tile"
                 [attr.data-highlighted]="m.cardsDue > 0"
                 [style.background]="m.cardsDue > 0 ? 'var(--accent)' : 'var(--card)'"
                 [style.border-color]="m.cardsDue > 0 ? 'var(--accent)' : 'var(--border)'">
@@ -61,7 +77,16 @@ import { SessionService } from '../../services/session.service';
                   [style.color]="m.cardsDue > 0 ? 'var(--bg)' : 'var(--muted)'">Due for review</p>
                 <p style="font-family:'Playfair Display',serif;font-size:1.6rem"
                   [style.color]="m.cardsDue > 0 ? 'var(--bg)' : 'var(--fg)'">{{ m.cardsDue }}</p>
-              </div>
+                @if (m.cardsDue === 0) {
+                  <p data-testid="caught-up-message" class="mt-1"
+                    style="font-family:'Lora',serif;font-size:12px;line-height:1.4;color:var(--muted)">
+                    You're caught up!
+                    @if (m.nextReviewAt) {
+                      <span data-testid="next-due-date"> Next on {{ formatDate(m.nextReviewAt) }}.</span>
+                    }
+                  </p>
+                }
+              </button>
               <div class="border px-4 py-3" data-testid="quiz-answers-tile" style="background:var(--card);border-color:var(--border)">
                 <p class="text-xs uppercase tracking-widest mb-1" style="font-family:'DM Mono',monospace;color:var(--muted)">Quiz answers</p>
                 <p style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--fg)">{{ m.totalQuizAnswers }}</p>
@@ -73,6 +98,18 @@ import { SessionService } from '../../services/session.service';
                 </p>
               </div>
             </div>
+
+            <!-- Delivered reminders (E-4.7). The in-app channel surfaces here. -->
+            @for (notification of unreadNotifications(); track notification.id) {
+              <button (click)="openNotification(notification)" data-testid="review-reminder"
+                class="w-full border px-5 py-3 mb-3 flex items-center justify-between gap-3 text-left"
+                style="background:var(--card);border-color:var(--accent)">
+                <span style="font-family:'Lora',serif;font-size:14.5px;color:var(--fg)">{{ notification.message }}</span>
+                <span class="shrink-0" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.06em;color:var(--accent)">
+                  Review →
+                </span>
+              </button>
+            }
 
             <!-- Quiz-prompt banner -->
             @if (m.cardsDue > 0) {
@@ -150,27 +187,68 @@ import { SessionService } from '../../services/session.service';
     </div>
   `,
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
   private contactsService = inject(ContactsService);
+  private notificationsService = inject(NotificationsService);
   private sessionService = inject(SessionService);
   private router = inject(Router);
 
   readonly metrics  = signal<DashboardMetrics | null>(null);
   readonly contacts = signal<Contact[]>([]);
+  readonly unreadNotifications = signal<Notification[]>([]);
+
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
-    this.dashboardService.getMetrics().subscribe({
-      next: m => this.metrics.set(m),
-      error: () => {},
-    });
+    this.refreshMetrics();
+    this.refreshNotifications();
     this.contactsService.list().subscribe({
       next: contacts => this.contacts.set(contacts),
       error: () => {},
     });
+    // Cards fall due on a clock, not on a navigation — a dashboard left open has to
+    // notice on its own (S-4.6.1).
+    this.refreshTimer = setInterval(() => {
+      this.refreshMetrics();
+      this.refreshNotifications();
+    }, METRICS_REFRESH_MS);
+  }
+
+  ngOnDestroy() {
+    if (this.refreshTimer) clearInterval(this.refreshTimer);
+  }
+
+  private refreshMetrics() {
+    this.dashboardService.getMetrics().subscribe({
+      next: m => this.metrics.set(m),
+      error: () => {},
+    });
+  }
+
+  private refreshNotifications() {
+    this.notificationsService.list().subscribe({
+      next: notifications => this.unreadNotifications.set(notifications.filter(n => n.readAt === null)),
+      error: () => {},
+    });
+  }
+
+  /** Dismisses the reminder and follows it, which is where it said it would go. */
+  openNotification(notification: Notification) {
+    this.notificationsService.markRead(notification.id).subscribe({ next: () => {}, error: () => {} });
+    this.unreadNotifications.update(list => list.filter(n => n.id !== notification.id));
+    this.router.navigateByUrl(notification.link);
   }
 
   goToQuiz() { this.router.navigate(['/quiz']); }
+  goToDueQuiz() { this.router.navigate(['/quiz'], { queryParams: { scope: 'due', start: 1 } }); }
+  goToUpcoming() { this.router.navigate(['/reviews/upcoming']); }
+  goToReminders() { this.router.navigate(['/settings/notifications']); }
+
+  formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
   goToTeach() { this.router.navigate(['/teach']); }
   goToTutorial() { this.router.navigate(['/tutorial']); }
   goToPalaces() { this.router.navigate(['/palaces']); }
