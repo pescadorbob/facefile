@@ -26,6 +26,8 @@ Note: The application can be run locally, or it can be run in AWS. The code has 
 
 ## Running Locally
 
+For WSL setup prerequisites, see [docs/dev/wsl/README.md](docs/dev/wsl/README.md).
+
 **Prerequisites:** Node.js 22+
 
 ### 1. Backend
