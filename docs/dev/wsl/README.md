@@ -1,8 +1,26 @@
 # WSL prerequisites for FaceFile
 
-This project is designed to run in WSL (Ubuntu or Debian) for local development, and it expects a Linux environment that can install and run Node.js, npm, AWS tooling, and the Amplify sandbox workflow.
+This project is not intended to be developed from a Windows-native shell. The app and its AWS Amplify deployment tooling are Linux-oriented, and the closest match to the deployment environment is WSL (Ubuntu or Debian).
+
+Using WSL helps avoid a lot of cross-platform mismatches between the source environment and the target runtime. In practice, the AWS Amplify sandbox and Node-based tooling behave much more predictably when the code is run from Linux rather than from PowerShell, Git Bash, or a Windows-only toolchain.
 
 This guide covers the prerequisites you need before you run the repo from WSL.
+
+Important: WSL is a full, separate Linux environment. It is not just "Git Bash" or a Windows shell with a few commands. Any tools you want to use for development in this environment must be installed inside WSL itself, including Node, npm, Git, AWS tooling, and any editor/CLI utilities you want to run from the Linux side.
+
+This also applies to VS Code: if you want to run terminal-based development inside WSL, install the WSL extension in Windows VS Code and open the folder from the WSL environment. Tools like Claude Code, documentation viewers, or other dev utilities are not automatically available just because they are installed on Windows.
+
+## Using VS Code with WSL
+
+The simplest setup is to do the work directly in WSL and not bounce the project through Windows.
+
+1. In WSL, create your normal user account, create a workspace folder like `~/work`, and clone the repo there.
+2. Open the folder directly from the WSL filesystem, such as `~/work/facefile`, in VS Code.
+3. Use the integrated terminal in that VS Code window, which is already running inside the Linux environment.
+
+This is better than trying to open a Windows-side clone and then rely on a translation layer between WSL and Windows. The project is meant to run in Linux, and using a Windows path or a Windows terminal adds avoidable path, auth, and dependency mismatches.
+
+If you want to use Claude Code, documentation viewers, or other tooling from within the editor, install them in the WSL environment itself so they are resolving against the same Linux runtime and file system as the app.
 
 ## Required tools
 
@@ -28,6 +46,68 @@ wsl --install -d Ubuntu
 ```
 
 Then reopen the Linux terminal.
+
+Important: create a normal Linux user account for development and do not use the root account. In WSL, you should work from your regular user home directory, not as `root`.
+
+For this repo, the expected workflow is to run as the user `brent`, not as `root`.
+
+To switch to the user account in WSL, run:
+
+```bash
+su - brent
+```
+
+Then verify:
+
+```bash
+whoami
+# should show: brent
+mkdir -p ~/work
+cd ~/work
+```
+
+If you ever see yourself in `/root`, exit and switch back to your normal user before continuing.
+
+#### Make WSL always log in as your user
+
+If WSL is dropping you into root on every new terminal, fix the default user instead of running `su - brent` each time.
+
+Check your current default user from Windows PowerShell:
+
+```powershell
+wsl -l -v
+```
+
+Then try logging in as your user explicitly:
+
+```powershell
+wsl -d <YourDistroName> -u brent
+```
+
+If that works, set it permanently:
+
+```powershell
+wsl -d <YourDistroName> --set-default-user brent
+```
+
+Or the older syntax:
+
+```powershell
+ubuntu config --default-user brent
+```
+
+Now WSL will always open as `brent`, not `root`.
+
+Do not run project commands with `sudo` unless a package manager or installer specifically requires it. For this project, use the normal user account (`brent`) for cloning, npm install, running the sandbox, and launching the frontend.
+
+Then clone this repo into a subdirectory under your user account, for example:
+
+```bash
+git clone <repo-url> ~/work/facefile
+cd ~/work/facefile
+```
+
+Avoid cloning into `/root` or running the project as the `root` user.
 
 ### 2. Node.js via nvm
 
@@ -101,10 +181,22 @@ Install the common Linux build prerequisites:
 
 ```bash
 sudo apt update
-sudo apt install -y build-essential curl ca-certificates python3
+sudo apt install -y build-essential curl ca-certificates python3 unzip
 ```
 
 This is especially important when using npm install on a fresh WSL environment.
+
+If you hit an error like `Command 'unzip' not found`, install it explicitly:
+
+```bash
+sudo apt install unzip
+```
+
+After the AWS CLI install succeeds, clean up the temporary zip file:
+
+```bash
+rm -f ~/awscliv2.zip
+```
 
 ## AWS / Amplify prerequisites
 
@@ -128,28 +220,36 @@ aws --version
 
 ### 6. AWS credentials
 
-Configure your AWS profile in WSL:
+For this project, use the AWS SSO profile flow instead of static IAM access keys when your account is configured for AWS IAM Identity Center.
+
+Configure a local AWS profile in WSL:
 
 ```bash
-aws configure
+aws configure sso
 ```
 
 You will be prompted for:
 
-- AWS Access Key ID
-- AWS Secret Access Key
-- Default region
-- Output format
+- SSO session name (for example: `amplify-admin`)
+- SSO start URL
+- SSO region (for example: `us-west-2`)
+- profile name (for example: `amplify-policy-799537122768`)
 
-Use the same account/region you intend to use for the Amplify sandbox.
-
-If you prefer to use existing environment variables instead, that also works:
+Then sign in and refresh the local credentials:
 
 ```bash
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
-export AWS_DEFAULT_REGION=us-east-1
+aws sso login --profile default
 ```
+
+Verify the profile works:
+
+```bash
+aws sts get-caller-identity --profile default
+```
+
+This is the correct flow for an AWS account using SSO roles, and it avoids storing long-lived access keys in your WSL environment.
+
+If your account is not using SSO, then static access keys are the fallback, but in the org shown here you should use the SSO profile path.
 
 ### 7. Amplify CLI tooling
 
@@ -158,7 +258,7 @@ This repo installs the Amplify dependencies at the repo root via npm, so you do 
 The project expects the root package dependencies to be installed:
 
 ```bash
-cd /home/brent/work/facefile
+cd ~/work/facefile
 npm install
 ```
 
@@ -175,7 +275,7 @@ The Angular app in `frontend/` also expects a clean Node environment and package
 Install frontend dependencies:
 
 ```bash
-cd /home/brent/work/facefile/frontend
+cd ~/work/facefile/frontend
 npm install
 ```
 
@@ -195,11 +295,51 @@ aws --version
 Then from the repo root:
 
 ```bash
-cd /home/brent/work/facefile
+cd ~/work/facefile
 npm install
 ```
 
 If the dependencies install cleanly, your WSL environment is ready for the project.
+
+## Running the app for e2e tests
+
+From the repo root in WSL, start the backend sandbox and the frontend app in separate terminals.
+
+### Start the Amplify sandbox
+
+```bash
+cd ~/work/facefile
+npm run sandbox
+```
+
+This starts the local AWS sandbox deployment that the app depends on.
+
+### Start the frontend
+
+In a second terminal:
+
+```bash
+cd ~/work/facefile/frontend
+npm run sync-outputs
+npm run start
+```
+
+The frontend should serve the app locally, typically on:
+
+- http://localhost:4200
+
+### Seed the app, if needed
+
+After the sandbox is up and stable, initialize the seeded default data if required by your workflow:
+
+```bash
+cd ~/work/facefile
+npm run seed
+```
+
+### Run e2e tests
+
+Once both processes are running, you can execute the e2e suite from the repo or the e2e folder as needed.
 
 ## Notes for this repo
 
@@ -226,7 +366,7 @@ sudo apt install -y build-essential
 - If the Angular frontend cannot find backend config, run:
 
 ```bash
-cd /home/brent/work/facefile/frontend
+cd ~/work/facefile/frontend
 npm run sync-outputs
 ```
 
