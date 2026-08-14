@@ -6,7 +6,16 @@ backend:
         # The Amplify CLI and CDK deps live in the root package.json, so both
         # of these run from the repo root — `amplify/package.json` is only the
         # `{"type": "module"}` marker and has no deps of its own to install.
-        - npm install
+        #
+        # `npm ci` (not `npm install`) because package-lock.json is committed:
+        # it installs the locked tree exactly, never rewrites the lockfile
+        # mid-build, and is the install command AWS pairs with the Amplify
+        # build cache. `--cache .npm` points npm's package cache at a repo-root
+        # directory the `cache:` block below persists, and `--prefer-offline`
+        # serves every already-cached tarball from disk instead of re-fetching
+        # it from the registry. The cache is restored before the backend phase
+        # runs, so this install and the frontend one below share it.
+        - npm ci --cache .npm --prefer-offline --no-audit --no-fund
         # backend.ts reads FRONTEND_URL at CDK synth time and bakes it into the
         # Lambdas' Access-Control-Allow-Origin (which must be a literal origin,
         # not "*", since requests carry the session cookie). Unset, it falls back
@@ -31,7 +40,12 @@ frontend:
         # the next relative `cd frontend` then resolves to frontend/frontend.
         # npm still runs the script with cwd set to frontend/, so `ng` finds
         # angular.json. Every path here stays relative to the repo root.
-        - npm --prefix frontend install
+        #
+        # `--prefix` only redirects where the tree is installed — the process
+        # cwd stays at the repo root, so `--cache .npm` resolves to the same
+        # root-level cache the backend phase warmed, and frontend/ and root
+        # share one set of cached tarballs.
+        - npm --prefix frontend ci --cache .npm --prefer-offline --no-audit --no-fund
     build:
       commands:
         - npm --prefix frontend run build
@@ -40,6 +54,17 @@ frontend:
     files:
       - '**/*'
   cache:
+    # Amplify restores this at the start of the build — before the backend
+    # phase, not just the frontend one — and re-uploads it at the end. There is
+    # a single cache block for the whole build, so the root (backend/CDK) tree
+    # and the frontend tree are both listed here.
+    #
+    # Both dependency directories are cached per AWS's guidance. Note that
+    # `npm ci` removes an existing node_modules before installing, so the win
+    # from the .npm entry is real and complementary: the reinstall resolves
+    # every tarball from local disk instead of the registry. Only dependency
+    # directories are listed — no build output (dist/, .angular/cache).
     paths:
       - node_modules/**/*
       - frontend/node_modules/**/*
+      - .npm/**/*

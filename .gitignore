@@ -14,3 +14,7 @@ node_modules
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+
+# npm package cache — written by the `--cache .npm` installs in amplify.yml
+# and persisted by that file's `cache:` block; never checked in.
+.npm/
