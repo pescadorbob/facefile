@@ -168,16 +168,17 @@ When multiple test runs execute against the same database (sequential runs, para
 `DslContext` (in `e2e/support/dsl-context.ts`) holds a SHA-256 hash derived from a per-test seed (default: `Date.now()`). Its `alias(value)` method builds a stable alias for any plain value:
 
 ```
-alias("Tom")   →  "Tom1a3f2"    (within a test run seeded at 1693847201234)
-alias("Tom")   →  "Tom1a3f2"    (same call → same result, always cached)
-alias("Alice") →  "Alice1a3f2"  (different value, same hash suffix)
+alias("Tom")   →  "Tom1a3f2c81"    (within a test run seeded at 1693847201234)
+alias("Tom")   →  "Tom1a3f2c81"    (same call → same result, always cached)
+alias("Alice") →  "Alice1a3f2c81"  (different value, same hash suffix)
 
 # A different test run (different seed) produces:
-alias("Tom")   →  "Tom1b9c4"
+alias("Tom")   →  "Tom1b9c4e07"
 ```
 
 The algorithm:
-1. `shortHash(seed)` = first 4 hex characters of SHA-256(seed)
+1. `shortHash(seed)` = first 8 hex characters of SHA-256(seed) — wide enough that runs
+   don't reuse each other's aliases; at 4 the space was small enough to collide in practice
 2. `alias(value)` = `value` + global sequence number (starts at 1 per unique value) + hash
 3. Aliases are cached — calling `alias("Tom")` twice returns the exact same string
 

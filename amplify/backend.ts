@@ -139,7 +139,9 @@ wire(tutorialLambda, {
 });
 
 const palacesLambda = backend.palacesFunction.resources.lambda;
-palacesTable.grantReadData(palacesLambda);
+// Write access as well as read since S-3.3.1: users create their own palaces
+// (POST /palaces) and can remove one (DELETE /palaces/{id}).
+palacesTable.grantReadWriteData(palacesLambda);
 wire(palacesLambda, {
   PALACES_TABLE_NAME: palacesTable.tableName,
   FRONTEND_URL,

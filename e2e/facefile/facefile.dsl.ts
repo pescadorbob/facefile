@@ -1,5 +1,5 @@
 import { DslContext } from '../support/dsl-context';
-import { parseParam } from '../support/parse-param';
+import { parseListParam, parseParam } from '../support/parse-param';
 import { FacefileBrowserDriver } from './facefile.browser.driver';
 
 export class FacefileDsl {
@@ -253,6 +253,88 @@ export class FacefileDsl {
 
   async tampersWithSessionCookie(): Promise<void> {
     await this.driver.setTamperedSessionCookie();
+  }
+
+  // ── Memory palaces ───────────────────────────────────────────────────────────
+
+  async opensThePalaces(): Promise<void> {
+    await this.driver.navigateToPalaces();
+  }
+
+  /** GIVEN-step palace, created straight through the API rather than the form. */
+  async registersPalace(palaceParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.driver.createPalaceViaApi(name);
+    this.driver.trackCreatedPalaceName(name);
+  }
+
+  async opensNewPalacePrompt(): Promise<void> {
+    await this.driver.clickNewPalaceAction();
+  }
+
+  async createsPalace(palaceParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.driver.fillPalaceNameField(name);
+    await this.driver.clickCreatePalaceSubmit();
+    this.driver.trackCreatedPalaceName(name);
+  }
+
+  /**
+   * Names the loci alongside the palace, in the order given. Locus names are not aliased:
+   * every assertion on them is scoped to the (aliased) palace that holds them, so they
+   * cannot collide across runs, and leaving them literal keeps the ordering assertion exact.
+   */
+  async createsPalaceWithLoci(palaceParam: string, lociParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.driver.fillPalaceNameField(name);
+    const loci = parseListParam(lociParam, 'loci');
+    for (const [index, locus] of loci.entries()) {
+      await this.driver.addLocusToPalaceForm(index + 1, locus);
+    }
+    await this.driver.clickCreatePalaceSubmit();
+    this.driver.trackCreatedPalaceName(name);
+  }
+
+  /**
+   * Submits the name exactly as written, with no alias suffix — the only verb that does.
+   * The minimum-length rule is measured on the characters the user actually types, so
+   * aliasing "Ox" into "Ox1a3f2" would stop the boundary case testing the boundary. Run
+   * isolation still holds: palace names are unique per user, and every spec using this
+   * signs in as its own throwaway account. Mirrored by seesPalaceNamedExactlyInList.
+   */
+  async createsPalaceNamedExactly(palaceParam: string): Promise<void> {
+    const name = parseParam(palaceParam, 'palace');
+    await this.driver.fillPalaceNameField(name);
+    await this.driver.clickCreatePalaceSubmit();
+    this.driver.trackCreatedPalaceName(name);
+  }
+
+  /** Unaliased for the same reason as createsPalaceNamedExactly — the length is the point. */
+  async attemptsToCreatePalaceNamed(palaceParam: string): Promise<void> {
+    const name = parseParam(palaceParam, 'palace');
+    await this.driver.fillPalaceNameField(name);
+    await this.driver.clickCreatePalaceSubmit();
+  }
+
+  async attemptsToCreatePalaceWithoutName(): Promise<void> {
+    await this.driver.fillPalaceNameField('');
+    await this.driver.clickCreatePalaceSubmit();
+  }
+
+  /** palaceParam must reuse a raw value already aliased earlier in this test (an existing palace). */
+  async attemptsToCreatePalaceWithDuplicateName(palaceParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.driver.fillPalaceNameField(name);
+    await this.driver.clickCreatePalaceSubmit();
+  }
+
+  async entersPalaceName(palaceParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.driver.fillPalaceNameField(name);
+  }
+
+  async abandonsNewPalacePrompt(): Promise<void> {
+    await this.driver.clickCancelOnPalaceForm();
   }
 
   // ── Dashboard ────────────────────────────────────────────────────────────────

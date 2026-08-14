@@ -27,6 +27,9 @@ export const test = base.extend<FacefileFixtures>({
 
       await driver.resetTutorialProgress();
       await driver.deleteAllContacts();
+      // Before the users are deactivated — the palaces belong to them, and the lookup
+      // this does goes through the still-active profile's session.
+      await driver.deleteTrackedPalaces();
       await driver.deactivateTrackedUsers();
       await driver.deactivateTrackedProfiles();
     },

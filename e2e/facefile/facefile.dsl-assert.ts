@@ -1,4 +1,4 @@
-import { parseParam } from '../support/parse-param';
+import { parseListParam, parseParam } from '../support/parse-param';
 import { FacefileDsl } from './facefile.dsl';
 
 export class FacefileDslAssert {
@@ -168,6 +168,71 @@ export class FacefileDslAssert {
 
   async sessionCookieIsBrowserScoped(): Promise<void> {
     await this.dsl.driver.expectSessionCookieIsBrowserScoped();
+  }
+
+  // ── Memory palaces ───────────────────────────────────────────────────────────
+
+  async seesNewPalaceOption(): Promise<void> {
+    await this.dsl.driver.expectNewPalaceActionVisible();
+  }
+
+  async seesPalaceInList(palaceParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.dsl.driver.expectPalaceRowVisible(name);
+  }
+
+  /** Mirrors createsPalaceNamedExactly — no alias, so the name asserted is the name typed. */
+  async seesPalaceNamedExactlyInList(palaceParam: string): Promise<void> {
+    const name = parseParam(palaceParam, 'palace');
+    await this.dsl.driver.expectPalaceRowVisible(name);
+  }
+
+  async doesNotSeePalaceInList(palaceParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.dsl.driver.expectPalaceRowNotVisible(name);
+  }
+
+  async seesPalaceHoldsNoLoci(palaceParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.dsl.driver.expectPalaceRowLociCount(name, 0);
+  }
+
+  async seesPalaceHoldsLoci(palaceParam: string, countParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(palaceParam, 'palace'));
+    const count = parseInt(parseParam(countParam, 'count'), 10);
+    await this.dsl.driver.expectPalaceRowLociCount(name, count);
+  }
+
+  /** Fails on a wrong order as well as a wrong set — locus order is the walking order. */
+  async seesPalaceLociInOrder(palaceParam: string, lociParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.dsl.driver.expectPalaceRowLociInOrder(name, parseListParam(lociParam, 'loci'));
+  }
+
+  /**
+   * The placement step of the add-person flow offers the palace. Unlike seesPalaceInWizard
+   * (which names a seeded palace verbatim) this one aliases, because the palace under test
+   * was created by this run.
+   */
+  async seesPalaceOfferedForPlacement(palaceParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(palaceParam, 'palace'));
+    await this.dsl.driver.expectPalaceButtonVisible(name);
+  }
+
+  async seesNewPalacePrompt(): Promise<void> {
+    await this.dsl.driver.expectPalaceNameFieldVisible();
+  }
+
+  async doesNotSeeNewPalacePrompt(): Promise<void> {
+    await this.dsl.driver.expectPalaceNameFieldNotVisible();
+  }
+
+  async seesNameTooShortErrorOnPalaceForm(): Promise<void> {
+    await this.dsl.driver.expectPalaceFormErrorContains('at least 2 characters');
+  }
+
+  async seesDuplicateNameErrorOnPalaceForm(): Promise<void> {
+    await this.dsl.driver.expectPalaceFormErrorContains('already');
   }
 
   // ── Dashboard ────────────────────────────────────────────────────────────────

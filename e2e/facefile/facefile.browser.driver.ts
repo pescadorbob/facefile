@@ -11,6 +11,7 @@ const DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000001';
 export class FacefileBrowserDriver {
   private readonly createdUserEmails = new Set<string>();
   private readonly createdUserNames = new Set<string>();
+  private readonly createdPalaceNames = new Set<string>();
   private sessionEstablished = false;
   private readonly failedXhr: string[] = [];
 
@@ -348,7 +349,23 @@ export class FacefileBrowserDriver {
   }
 
   async createActiveUserViaApi(name: string, email: string): Promise<void> {
-    await this.request.post(`${BACKEND_URL}/admin/users`, { data: { name, email } });
+    await this.createUserOrThrow(name, email);
+  }
+
+  /**
+   * A failed create used to be swallowed: `.json()` on the error body yields `{error}`,
+   * whose `id` is undefined, and the caller carried on to log in as nobody. The session
+   * then never existed and the route guard bounced the test to the profile picker — which
+   * surfaced 30 seconds later as a timeout on whatever locator came next, nowhere near
+   * the cause. Fail here instead, where the reason is still in hand.
+   */
+  private async createUserOrThrow(name: string, email: string): Promise<{ id: string }> {
+    const res = await this.request.post(`${BACKEND_URL}/admin/users`, { data: { name, email } });
+    const body = await res.json();
+    if (!res.ok() || !body?.id) {
+      throw new Error(`Could not create the test account <${email}>: ${res.status()} ${JSON.stringify(body)}`);
+    }
+    return body;
   }
 
   /**
@@ -358,8 +375,7 @@ export class FacefileBrowserDriver {
    * so later navigations don't fall back to the seeded profile and clobber this session.
    */
   async signInAsNewUserViaApi(name: string, email: string): Promise<void> {
-    const created = await this.request.post(`${BACKEND_URL}/admin/users`, { data: { name, email } });
-    const user = await created.json();
+    const user = await this.createUserOrThrow(name, email);
     await this.page.request.post(`${BACKEND_URL}/session`, { data: { userId: user.id } });
     this.sessionEstablished = true;
   }
@@ -477,6 +493,122 @@ export class FacefileBrowserDriver {
     const sessionCookie = cookies.find(c => c.name === 'facefile_user_id');
     expect(sessionCookie).toBeTruthy();
     expect(sessionCookie!.expires).toBe(-1);
+  }
+
+  // ── Memory palaces ───────────────────────────────────────────────────────────
+
+  async navigateToPalaces(): Promise<void> {
+    await this.ensureAuthenticatedSession();
+    await this.page.goto('/palaces');
+  }
+
+  /** page.request so the palace is scoped to whichever profile the session cookie holds. */
+  async createPalaceViaApi(name: string): Promise<void> {
+    await this.page.request.post(`${BACKEND_URL}/palaces`, { data: { name } });
+  }
+
+  async clickNewPalaceAction(): Promise<void> {
+    await this.page.getByRole('button', { name: /New palace/i }).click();
+  }
+
+  async fillPalaceNameField(name: string): Promise<void> {
+    await this.page.getByLabel('Name', { exact: true }).fill(name);
+  }
+
+  /**
+   * Adds one more locus row to the open form and names it. Addressed by the row's own
+   * 1-based label rather than "the last field on screen": `.last()` resolves against
+   * whatever is in the DOM at that moment, which can still be the previous row if the
+   * click hasn't rendered yet — the fill then lands on the wrong row and silently
+   * overwrites it. Naming the row makes fill() wait for the right one to exist.
+   */
+  async addLocusToPalaceForm(position: number, name: string): Promise<void> {
+    await this.page.getByRole('button', { name: /Add locus/i }).click();
+    await this.page.getByLabel(`Locus ${position}`, { exact: true }).fill(name);
+  }
+
+  /**
+   * Clicks create and waits for it to settle: the form closes on success, or an inline
+   * error renders when it is rejected. Returning while the request is still in flight
+   * lets the next step navigate away and abort it — which surfaces much later as a
+   * palace that was never actually saved. Same guard, and same reason, as
+   * clickSaveUserForm. Keyed on the form's own field rather than the button, which
+   * relabels to "Creating…" while the request runs.
+   */
+  async clickCreatePalaceSubmit(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Create palace' }).click();
+    const nameField = this.page.getByLabel('Name', { exact: true });
+    await expect
+      .poll(async () => (await nameField.count()) === 0 || (await this.page.getByTestId('palace-form-error').count()) > 0)
+      .toBe(true);
+  }
+
+  async clickCancelOnPalaceForm(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Cancel' }).click();
+  }
+
+  /** Rows carry no accessible role of their own, so they are keyed by test id and filtered by name. */
+  private palaceRow(name: string) {
+    return this.page.getByTestId('palace-row').filter({ hasText: name });
+  }
+
+  async expectNewPalaceActionVisible(): Promise<void> {
+    await expect(this.page.getByRole('button', { name: /New palace/i })).toBeVisible();
+  }
+
+  async expectPalaceRowVisible(name: string): Promise<void> {
+    await expect(this.palaceRow(name)).toBeVisible();
+  }
+
+  async expectPalaceRowNotVisible(name: string): Promise<void> {
+    await expect(this.palaceRow(name)).toHaveCount(0);
+  }
+
+  async expectPalaceRowLociCount(name: string, count: number): Promise<void> {
+    await expect(this.palaceRow(name)).toContainText(`${count} loci`);
+  }
+
+  /** Array form of toHaveText asserts the count and the order in one go. */
+  async expectPalaceRowLociInOrder(name: string, loci: string[]): Promise<void> {
+    await expect(this.palaceRow(name).getByTestId('locus-name')).toHaveText(loci);
+  }
+
+  async expectPalaceNameFieldVisible(): Promise<void> {
+    await expect(this.page.getByLabel('Name', { exact: true })).toBeVisible();
+  }
+
+  async expectPalaceNameFieldNotVisible(): Promise<void> {
+    await expect(this.page.getByLabel('Name', { exact: true })).toHaveCount(0);
+  }
+
+  async expectPalaceFormErrorContains(text: string): Promise<void> {
+    await expect(this.page.getByText(new RegExp(text, 'i'))).toBeVisible();
+  }
+
+  /** Records a palace created during this test so it can be removed in teardown. */
+  trackCreatedPalaceName(name: string): void {
+    if (name) this.createdPalaceNames.add(name);
+  }
+
+  /**
+   * Removes every palace this test created, looked up by name on the active profile.
+   * Only ever touches this run's own rows, so unlike deleteAllContacts it needs no
+   * local-target guard of its own — the fixture already skips teardown off localhost.
+   */
+  async deleteTrackedPalaces(): Promise<void> {
+    for (const name of this.createdPalaceNames) {
+      const palace = await this.findPalaceByName(name);
+      if (!palace) continue;
+      await this.page.request.delete(`${BACKEND_URL}/palaces/${palace.id}`);
+    }
+    this.createdPalaceNames.clear();
+  }
+
+  private async findPalaceByName(name: string): Promise<{ id: string; name: string } | undefined> {
+    const res = await this.page.request.get(`${BACKEND_URL}/palaces`);
+    if (!res.ok()) return undefined;
+    const palaces = await res.json();
+    return palaces.find((p: { id: string; name: string }) => p.name === name);
   }
 
   // ── Dashboard ────────────────────────────────────────────────────────────────
