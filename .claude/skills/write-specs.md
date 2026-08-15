@@ -21,6 +21,12 @@ When asked to write or generate executable specifications from story acceptance 
 - The test calls the DSL. The DSL calls the driver. The driver translates instructions into the protocol required to connect to the SUT.
 - Use the DSL to control the external system stubs the SUT depends on as part of each component test.
 
+## Never access the database directly
+
+- The driver must **never** read or write DynamoDB directly (no AWS SDK Document Client calls, no table scans/gets/puts) for setup, seeding, or teardown. Every interaction with the SUT's data goes through the **UI** or the **REST API** — the same paths a real user or client would use.
+- If a spec needs a capability the existing API doesn't expose (bulk reset, deactivating stray records, reading data no user-facing route returns), **add an admin API endpoint** for it (mount it alongside the existing `admin/users` resource in `amplify/backend.ts`, following `.claude/skills/ports-and-adapters.md` for the handler/service/repository split) rather than reaching around the API into the table.
+- This keeps specs production-like: they exercise the same authorization, validation, and side effects (e.g. a ReviewCard created alongside a Contact) that a real request would, instead of silently drifting out of sync with the API contract.
+
 ## E2E module location and tooling
 
 - All executable specifications that drive the running application live in the top-level **`e2e/`** module — at the same level as `frontend/` and `backend/`, not inside either.

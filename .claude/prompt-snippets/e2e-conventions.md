@@ -142,11 +142,12 @@ spec —uses—> DSL (FacefileDsl, FacefileDslAssert) —uses—> Driver (Facefi
 
 ### Layer 3 — Driver (`e2e/facefile/facefile.browser.driver.ts`)
 
-- The **only** place that knows about Playwright (`Page`, `Locator`, `APIRequestContext`), CSS/role selectors, the auth-interceptor's token-refresh dance, file-upload paths, and DB cleanup via the API or Prisma.
+- The **only** place that knows about Playwright (`Page`, `Locator`, `APIRequestContext`), CSS/role selectors, the auth-interceptor's token-refresh dance, and file-upload paths.
 - Owns: navigating to routes, locating elements by accessible role/name (prefer `getByRole`/`getByLabel` over CSS), filling forms, uploading photos, reading network responses, and seeding/cleaning data through the backend API.
 - OK: anything Playwright/HTTP/file-system related, retries/polling, `expect(locator).toBeVisible()`.
 - **Not OK**: business vocabulary (`SM-2`, `palace`, `locus`) leaking into method names — driver methods describe *mechanisms* (`clickPrimaryButton`, `getRowsInTable('contacts')`), not *intent*. Intent belongs in the DSL.
 - **Not OK**: throwing bare strings; use a `requirePage()` / `requireSignedInUser()` pattern so misuse fails with a clear message.
+- **Not OK**: talking to DynamoDB directly (AWS SDK Document Client, table scans/gets/puts) for setup or cleanup. All seeding and teardown goes through the UI or the REST API — see "Never hit DynamoDB directly" below.
 - Cleanup is mandatory and must remain idempotent — every test artifact (DB row, uploaded file, signed-in session) must be released in fixture teardown. **Deactivate** user accounts rather than deleting them. Never touch the account named `"Brent Fisher"`.
 
 ### Layer 4 — Fixtures (`e2e/fixtures/`)
@@ -249,7 +250,18 @@ const message = this.ctx.interpolate(parseParam(messageParam, 'message'));
 - **Cleanup belongs at the end** — put teardown in the fixture `finally` block. Do not add `beforeEach` or `afterEach` cleanup blocks in spec files; with temporal isolation (aliased names/emails), there are no pre-test leftovers to clean up, and the fixture `finally` runs unconditionally after each test.
 - **Always alias user names and emails** — use `ctx.alias(name)` for names and `aliasEmail(email)` (alias the local part before `@`) for emails in every DSL method that creates or references a user. This ensures each test run produces unique, non-conflicting accounts and deactivation-based teardown never causes 409 conflicts on subsequent runs.
 - Do not share users across specs. All DSL methods that create users (`registersUser`, `userExistsWith`, `userExistsWithEmail`, `submitsNewUserWith`) alias their inputs automatically — specs always write plain names/emails.
-- The backend currently runs in single-user mode (`DEFAULT_USER_ID` in `amplify/backend.ts`, a fixed seeded UUID — see `amplify/seed.ts`). Until that changes, e2e specs must reset the relevant DynamoDB tables (Contacts, ReviewCards, QuizResults, TutorialProgress, etc.) in teardown rather than rely on user isolation.
+- The backend currently runs in single-user mode (`DEFAULT_USER_ID` in `amplify/backend.ts`, a fixed seeded UUID — see `amplify/seed.ts`). Until that changes, e2e specs must reset the relevant per-user data (Contacts, ReviewCards, QuizResults, TutorialProgress, etc.) in teardown rather than rely on user isolation — via an admin API endpoint (see below), never by touching DynamoDB directly.
+
+---
+
+## Never hit DynamoDB directly
+
+- E2E specs, the DSL, and the driver must **never** read or write DynamoDB directly — no AWS SDK Document Client calls, no `aws dynamodb` CLI, no scans/gets/puts against `Contacts`, `ReviewCards`, `QuizResults`, `TutorialProgress`, `Users`, `Palaces`, `UserSettings`, or `Notifications`. Every setup, seed, and teardown step goes through the **UI** (Playwright) or the **REST API** (`APIRequestContext`), exactly like a real client.
+- This matters especially for teardown in single-user mode (see above): resetting a user's data between specs is tempting to do with a direct table wipe, but that bypasses the same validation and side effects (e.g. `POST /contacts` also creating a `ReviewCard`) that production traffic goes through, and it will silently drift out of sync with the API as the schema evolves.
+- **If the operation you need has no existing route** (e.g. "delete all contacts for the seeded user", "force a card's `nextReviewAt` into the past", "read a raw `QuizResult` row for an assertion"), **add an admin API endpoint** for it rather than reaching into the table:
+  - Mount it as a new sub-path on the existing `admin/users` Lambda (`amplify/functions/adminUsers/`) if it's user-management-shaped, or add a new resource in `amplify/backend.ts` (`mountLambda`) following the handler/service/repository split in `.claude/skills/ports-and-adapters.md`.
+  - Have the driver call the new admin endpoint via `APIRequestContext`, the same way it calls every other route.
+  - Treat the new endpoint as real product surface: it ships in `amplify/backend.ts` like any other route, and should be reviewed with the same care (it's still unauthenticated, per the Authorization Status section in `CLAUDE.md`, so keep destructive admin routes scoped to what tests actually need).
 
 ---
 

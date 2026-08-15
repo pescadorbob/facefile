@@ -10,6 +10,7 @@
 - [ ] A progress bar shows which step the user is on
 - [ ] The user cannot advance past step 1 without entering a name
 - [ ] Step 2 shows only palaces belonging to the logged-in user; choosing a palace reveals its loci
+- [ ] If the user has no palaces when reaching step 2 (or on opening the wizard, if palace ownership is known up front), the wizard redirects to palace creation (see `docs/capabilities/cap-03-creating-and-refining-name-images/functions/fn-02-locus-assignment/epics/ep-3-3-palace-and-locus-selection/stories/story-01-user-creates-a-named-palace.md`) with guidance that a palace is needed first, and directs the user back to resume adding the person once a palace exists
 - [ ] Step 3 shows the chosen locus name, shows the person's name prominently and offers three guided technique hints (sound-alike, meaning, personal association) to spark a name image
 - [ ] Step 4 shows the chosen locus name, shows the person's name and name image, and prompts the user to write a vivid association scene
 - [ ] Step 5 shows a summary of all captured details before the user saves
@@ -46,4 +47,11 @@ Scenario 5: User can navigate back to a previous step
   GIVEN a registered user on step 3 of the guided wizard
   WHEN the user clicks Back
   THEN the user is returned to step 2 with their previously entered name image preserved
+
+Scenario 6: User with no palaces is sent to create one before continuing
+  GIVEN a registered user who has no memory palaces
+  WHEN the user reaches step 2 of the guided wizard
+  THEN the user is taken to the new-palace form
+  AND guidance explains that a palace is needed before a person can be placed
+  AND once a palace is created, the user is returned to resume the guided wizard
 ```

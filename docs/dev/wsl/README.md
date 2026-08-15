@@ -145,6 +145,26 @@ Expected result:
 - `node` version should be 22.x
 - `npm` should be available and working
 
+#### Make `sudo` see your nvm-installed Node
+
+`sudo` resets your shell's `PATH` by default (a security feature called `secure_path`), so it can't find `node`/`npm`/`npx` installed by nvm under `~/.nvm`. Any command that needs both `sudo` and a Node-based CLI — for example `sudo npx playwright install-deps` (see [E2E test prerequisites](#e2e-test-prerequisites-playwright) below) — will fail with `sudo: npx: command not found` until this is fixed.
+
+Add this to the end of `~/.bashrc`:
+
+```bash
+# sudo strips PATH by default, so it can't see nvm-managed node/npm/npx.
+# This preserves the current PATH into sudo'd commands (nvm's documented fix).
+alias sudo='sudo env PATH="$PATH"'
+```
+
+Then reload your shell:
+
+```bash
+source ~/.bashrc
+```
+
+After this, `sudo npx ...`, `sudo npm ...`, and `sudo node ...` all resolve against whatever Node version `nvm` currently has active, in every new shell — no need to repeat this per version switch or per command.
+
 ### 3. Git
 
 Git is required for cloning and working with the repo.
@@ -281,6 +301,34 @@ npm install
 
 The repo expects `npm run sync-outputs` to be used when `amplify_outputs.json` changes, so the frontend can read backend config at runtime.
 
+## E2E test prerequisites (Playwright)
+
+The e2e suite in `e2e/` uses Playwright, which drives a real headless Chromium. Install its dependencies:
+
+```bash
+cd ~/work/facefile/e2e
+npm install
+```
+
+Playwright's headless browser binary needs a large set of Linux shared libraries (GTK, fonts, codecs, `libnspr4.so`, `libnss3.so`, and similar) that a fresh WSL install does not have. Without them, `npm run test:e2e` fails immediately with errors like:
+
+```
+error while loading shared libraries: libnspr4.so: cannot open shared object file: No such file or directory
+```
+
+Install the missing system libraries with Playwright's own installer (requires `sudo`, so make sure the [`sudo` + nvm PATH fix](#make-sudo-see-your-nvm-installed-node) above is in place first):
+
+```bash
+sudo npx playwright install-deps
+```
+
+Verify it worked:
+
+```bash
+cd ~/work/facefile/e2e
+npm run test:e2e
+```
+
 ## Recommended environment check
 
 After setup, verify all core tools work:
@@ -339,7 +387,21 @@ npm run seed
 
 ### Run e2e tests
 
-Once both processes are running, you can execute the e2e suite from the repo or the e2e folder as needed.
+Once both the Amplify sandbox and the frontend are running (and the [Playwright system dependencies](#e2e-test-prerequisites-playwright) are installed), run the suite from the `e2e/` folder:
+
+```bash
+cd ~/work/facefile/e2e
+npm run test:e2e
+```
+
+Other useful variants:
+
+```bash
+npm run test:e2e:headed   # run with a visible browser window
+npm run test:e2e:ui       # interactive Playwright UI mode
+npm run test:e2e:report   # open the HTML report from the last run
+npm run test:e2e:prod     # run against the deployed prod config instead of local
+```
 
 ## Notes for this repo
 
