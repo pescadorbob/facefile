@@ -224,6 +224,10 @@ export class FacefileDslAssert {
     await this.dsl.driver.expectPalaceNameFieldVisible();
   }
 
+  async seesPalaceGuidanceForAddPerson(): Promise<void> {
+    await this.dsl.driver.expectPalaceGuidanceBannerVisible();
+  }
+
   async doesNotSeeNewPalacePrompt(): Promise<void> {
     await this.dsl.driver.expectPalaceNameFieldNotVisible();
   }

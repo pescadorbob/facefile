@@ -1,7 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { PalacesService, Palace, Locus } from '../../services/palaces.service';
 import { ContactsService } from '../../services/contacts.service';
+
+// Carries the in-progress name across the palace-creation detour (S-2.5.1 scenario 6)
+// so the wizard can resume where the user left off rather than starting over.
+const DRAFT_NAME_KEY = 'facefile:addPersonDraftName';
 
 const WIZARD_STEPS = [
   { number: 1, title: 'Name & photo',       shortTitle: 'Name'   },
@@ -181,9 +185,9 @@ const NAME_HINTS = [
               <div>
                 <p class="text-xs uppercase tracking-widest mb-2"
                   style="font-family:'DM Mono',monospace;color:var(--muted)">Choose a palace</p>
-                @if (palaces().length === 0) {
+                @if (palacesLoaded() && palaces().length === 0) {
                   <p class="text-sm" style="font-family:'Lora',serif;color:var(--muted)">
-                    No palaces found. Add one via the palace manager first.
+                    No palaces yet — taking you to create one…
                   </p>
                 }
                 <div class="space-y-2">
@@ -438,6 +442,7 @@ export class AddPersonComponent implements OnInit {
   readonly associationScene = signal('');
   readonly expandedHint     = signal<number | null>(null);
   readonly palaces          = signal<Palace[]>([]);
+  readonly palacesLoaded    = signal(false);
   readonly saving           = signal(false);
   readonly nameError        = signal(false);
 
@@ -461,11 +466,36 @@ export class AddPersonComponent implements OnInit {
     ];
   });
 
-  ngOnInit() {
-    this.palacesService.list().subscribe({
-      next: ps => this.palaces.set(ps),
-      error: () => {},
+  constructor() {
+    // Step 2 needs a palace to place the person in; a user with none is sent to create
+    // one first rather than shown an empty picker (S-2.5.1 scenario 6).
+    effect(() => {
+      if (this.step() === 2 && this.palacesLoaded() && this.palaces().length === 0) {
+        this.redirectToCreatePalace();
+      }
     });
+  }
+
+  ngOnInit() {
+    const draftName = sessionStorage.getItem(DRAFT_NAME_KEY);
+    if (draftName) {
+      this.name.set(draftName);
+      // A draft only exists because the redirect fired from step 2 — resume there
+      // rather than making the user retype the name and step through step 1 again.
+      this.step.set(2);
+      sessionStorage.removeItem(DRAFT_NAME_KEY);
+    }
+    this.palacesService.list().subscribe({
+      next: ps => { this.palaces.set(ps); this.palacesLoaded.set(true); },
+      error: () => this.palacesLoaded.set(true),
+    });
+  }
+
+  private redirectToCreatePalace() {
+    if (this.name().trim()) {
+      sessionStorage.setItem(DRAFT_NAME_KEY, this.name().trim());
+    }
+    this.router.navigate(['/palaces'], { queryParams: { returnTo: '/persons/new' } });
   }
 
   handleFile(event: Event) {

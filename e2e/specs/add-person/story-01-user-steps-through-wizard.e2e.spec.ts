@@ -77,4 +77,25 @@ test.describe('S-2.5.1 User Steps Through the Wizard to Add a New Person', () =>
     await facefile.advancesWizardStep();
     await confirmThat(facefile).seesNameImagePreservedAfterBack('image: a carousel horse');
   });
+
+  test('a user with no palaces is sent to create one, then resumes the wizard', async ({ facefile }) => {
+    // GIVEN a registered user who has no memory palaces
+    await facefile.signsInAsTestUser();
+    await facefile.opensGuidedWizard();
+    await facefile.completesStep1('name: Owen');
+
+    // WHEN the user reaches step 2 of the guided wizard
+    // THEN the user is taken to the new-palace form
+    await confirmThat(facefile).seesNewPalacePrompt();
+    // AND guidance explains that a palace is needed before a person can be placed
+    await confirmThat(facefile).seesPalaceGuidanceForAddPerson();
+
+    // AND once a palace is created, the user is returned to resume the guided wizard
+    await facefile.createsPalace('palace: Reading Nook');
+    await confirmThat(facefile).isOnWizardStep('step: 2');
+
+    // AND the previously entered name was preserved across the detour
+    await facefile.advancesWizardStep();
+    await confirmThat(facefile).seesNameProminentlyOnStep3('name: Owen');
+  });
 });

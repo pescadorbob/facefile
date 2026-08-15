@@ -28,6 +28,17 @@ amplify/ (Amplify Gen 2 — CDK-based)
 
 ---
 
+## Testing Policy — Tests Are Not Optional
+
+**Any time you implement a feature, fix a bug, or change behavior, add the tests that cover it as part of the same piece of work.** Do not treat "add tests" as a separate follow-up step the user has to ask for a second time, and do not report an implementation task as done until its tests exist and pass.
+
+- **Acceptance-criteria coverage**: when a change implements or touches acceptance criteria on a story under `docs/capabilities/`, add at least one e2e spec per acceptance criterion (equivalently, per `## Scenarios` entry) — see `.claude/prompt-snippets/e2e-conventions.md` for the Spec → DSL → Driver → Playwright layering, temporal isolation, and definition of done. New DSL verbs need a backing driver method; new driver methods need at least one spec exercising them.
+- **Unit coverage**: pure backend logic (SM-2 scheduling, quiz session assembly, reminder sweeps, etc.) gets a Jest unit spec in `e2e/unit/`; Angular component/service logic gets a Karma/Jasmine spec under `frontend/src/**/*.spec.ts`.
+- **Prove it, don't just add it**: run the new/affected tests (`ng test`, `npm run test:e2e` / `npm run test:unit` from `e2e/`) before calling the task complete. A test file that was never executed is not evidence anything works.
+- If a task genuinely has nothing to test (docs-only, config-only, pure refactor with existing coverage), say so explicitly and explain why — never skip tests silently.
+
+---
+
 ## Dev Commands
 
 ### Backend (Amplify)

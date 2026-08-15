@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Palace, PalacesService } from '../../services/palaces.service';
 
 /** Mirrors the rule in amplify/functions/_shared/palaceService.ts (S-3.3.1). */
@@ -50,6 +50,16 @@ const NAME_TOO_SHORT = `A palace name must be at least ${MIN_NAME_LENGTH} charac
 
       <main class="flex-1 overflow-y-auto">
         <div class="max-w-2xl mx-auto px-5 pt-8 pb-16">
+
+          @if (returnTo()) {
+            <div data-testid="palace-guidance-banner" class="border px-4 py-3 mb-6"
+              style="background:var(--card);border-color:var(--accent)">
+              <p style="font-family:'Lora',serif;font-size:14px;line-height:1.6;color:var(--fg)">
+                You'll need a memory palace before you can place a new person. Create one below —
+                you'll be taken back to finish adding them.
+              </p>
+            </div>
+          }
 
           <!-- The form replaces the action rather than sitting beside it, so there is
                only ever one way to name a palace on screen at a time. -->
@@ -147,6 +157,7 @@ const NAME_TOO_SHORT = `A palace name must be at least ${MIN_NAME_LENGTH} charac
 export class PalacesComponent implements OnInit {
   private palacesService = inject(PalacesService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   readonly palaces = signal<Palace[]>([]);
 
@@ -156,7 +167,16 @@ export class PalacesComponent implements OnInit {
   readonly formError   = signal<string | null>(null);
   readonly saving      = signal(false);
 
+  // Set when arriving from a flow (e.g. the add-person wizard, S-2.5.1 scenario 6)
+  // that needs a palace to exist before it can continue.
+  readonly returnTo = signal<string | null>(null);
+
   ngOnInit() {
+    const returnTo = this.route.snapshot.queryParamMap.get('returnTo');
+    this.returnTo.set(returnTo);
+    if (returnTo) {
+      this.openForm();
+    }
     this.palacesService.list().subscribe({
       next: palaces => this.palaces.set(palaces),
       error: () => {},
@@ -202,6 +222,10 @@ export class PalacesComponent implements OnInit {
         this.palaces.update(palaces => [...palaces, palace]);
         this.saving.set(false);
         this.closeForm();
+        const returnTo = this.returnTo();
+        if (returnTo) {
+          this.router.navigateByUrl(returnTo);
+        }
       },
       error: err => {
         this.saving.set(false);
@@ -211,7 +235,7 @@ export class PalacesComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/dashboard']);
+    this.router.navigateByUrl(this.returnTo() ?? '/dashboard');
   }
 
   private resetForm() {

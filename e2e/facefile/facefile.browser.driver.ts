@@ -585,6 +585,11 @@ export class FacefileBrowserDriver {
     await expect(this.page.getByText(new RegExp(text, 'i'))).toBeVisible();
   }
 
+  /** Banner shown only when the palace page was reached via a returnTo redirect (S-2.5.1 scenario 6). */
+  async expectPalaceGuidanceBannerVisible(): Promise<void> {
+    await expect(this.page.getByTestId('palace-guidance-banner')).toBeVisible();
+  }
+
   /** Records a palace created during this test so it can be removed in teardown. */
   trackCreatedPalaceName(name: string): void {
     if (name) this.createdPalaceNames.add(name);
