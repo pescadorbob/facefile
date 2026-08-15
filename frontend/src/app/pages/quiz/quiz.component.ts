@@ -2,6 +2,8 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { ActivatedRoute, Router } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { SettingsService, UserSettings } from '../../services/settings.service';
+import { SpeechRecognitionService } from '../../services/speech-recognition.service';
+import { namesMatch, normalise } from './name-match';
 import {
   AnswerFormat,
   QuizDirection,
@@ -31,9 +33,15 @@ const MODES: { mode: QuizMode; label: string }[] = [
   { mode: 'name-to-face', label: 'Name → Face' },
 ];
 
-const ANSWER_FORMATS: { format: AnswerFormat; label: string }[] = [
+/** The typed/choice split the backend knows about, plus a spoken option (S-4.1.3) that
+ * rides on top of a `typed` session — the server never needs to know the user is
+ * speaking rather than typing, only that no multiple-choice options are wanted. */
+type UiAnswerFormat = AnswerFormat | 'spoken';
+
+const ANSWER_FORMATS: { format: UiAnswerFormat; label: string }[] = [
   { format: 'choice', label: 'Multiple choice' },
   { format: 'typed', label: 'Type the name' },
+  { format: 'spoken', label: 'Say the name' },
 ];
 
 /** One answered question, kept for the end-of-session summary (S-4.3.1, S-4.4.1). */
@@ -175,16 +183,16 @@ type Phase = 'start' | 'question' | 'reveal' | 'summary' | 'empty';
                 <p class="text-xs uppercase tracking-widest mb-2"
                   style="font-family:'DM Mono',monospace;color:var(--muted)">Answering Face → Name</p>
                 <div class="flex flex-wrap gap-2" data-testid="answer-format-picker">
-                  @for (option of answerFormats; track option.format) {
+                  @for (option of answerFormats(); track option.format) {
                     <button (click)="chooseAnswerFormat(option.format)"
                       [attr.data-testid]="'answer-format-' + option.format"
-                      [attr.data-selected]="answerFormat() === option.format"
-                      [attr.aria-pressed]="answerFormat() === option.format"
+                      [attr.data-selected]="uiAnswerFormat() === option.format"
+                      [attr.aria-pressed]="uiAnswerFormat() === option.format"
                       class="px-3 py-2 text-xs border"
                       style="font-family:'DM Mono',monospace;letter-spacing:0.04em"
-                      [style.background]="answerFormat() === option.format ? 'var(--fg)' : 'transparent'"
-                      [style.color]="answerFormat() === option.format ? 'var(--bg)' : 'var(--fg)'"
-                      [style.border-color]="answerFormat() === option.format ? 'var(--fg)' : 'var(--border)'">
+                      [style.background]="uiAnswerFormat() === option.format ? 'var(--fg)' : 'transparent'"
+                      [style.color]="uiAnswerFormat() === option.format ? 'var(--bg)' : 'var(--fg)'"
+                      [style.border-color]="uiAnswerFormat() === option.format ? 'var(--fg)' : 'var(--border)'">
                       {{ option.label }}
                     </button>
                   }
@@ -284,6 +292,23 @@ type Phase = 'start' | 'question' | 'reveal' | 'summary' | 'empty';
                         </button>
                       }
                     </div>
+                  } @else if (spokenAnswering()) {
+                    <!-- Spoken answering (S-4.1.3): heard text is graded as a close match, not an exact one. -->
+                    <div class="space-y-3" data-testid="spoken-answer">
+                      <button (click)="toggleListening()" data-testid="speak-answer-btn"
+                        [attr.aria-pressed]="listening()"
+                        class="w-full border px-5 py-4"
+                        [style.background]="listening() ? 'var(--accent)' : 'var(--fg)'"
+                        style="border-color:var(--fg);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:0.09em;text-transform:uppercase;color:var(--bg)">
+                        {{ listening() ? 'Listening…' : 'Tap to speak the name' }}
+                      </button>
+                      @if (speechUnsupported()) {
+                        <p data-testid="speech-unsupported" class="text-center text-xs"
+                          style="font-family:'DM Mono',monospace;color:var(--accent)">
+                          Voice answers aren't supported in this browser — try typing instead.
+                        </p>
+                      }
+                    </div>
                   } @else {
                     <div class="space-y-3">
                       <input type="text" data-testid="answer-input" [value]="typedAnswer()"
@@ -326,6 +351,14 @@ type Phase = 'start' | 'question' | 'reveal' | 'summary' | 'empty';
                           </div>
                         }
                       </div>
+                    }
+
+                    @if (spokenTranscript()) {
+                      <!-- Confirms what the user actually said (S-4.1.3), heard text and all. -->
+                      <p data-testid="spoken-transcript" class="text-center"
+                        style="font-family:'Lora',serif;font-style:italic;font-size:14px;color:var(--muted)">
+                        You said "{{ spokenTranscript() }}"
+                      </p>
                     }
 
                     <div class="border px-5 py-5 text-center" style="background:var(--card);border-color:var(--border)">
@@ -487,12 +520,16 @@ export class QuizComponent implements OnInit, OnDestroy {
   private quizService = inject(QuizService);
   private dashboardService = inject(DashboardService);
   private settingsService = inject(SettingsService);
+  private speech = inject(SpeechRecognitionService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   readonly ratings = RATINGS;
   readonly modes = MODES;
-  readonly answerFormats = ANSWER_FORMATS;
+  /** "Say the name" is only offered when the browser can actually listen (S-4.1.3). */
+  readonly answerFormats = computed(() =>
+    this.speech.isSupported ? ANSWER_FORMATS : ANSWER_FORMATS.filter(option => option.format !== 'spoken'),
+  );
 
   readonly phase = signal<Phase>('start');
   readonly session = signal<QuizSession | null>(null);
@@ -510,6 +547,13 @@ export class QuizComponent implements OnInit, OnDestroy {
 
   readonly mode = signal<QuizMode>('mixed');
   readonly answerFormat = signal<AnswerFormat>('choice');
+  /** Local-only overlay on top of `answerFormat`: a spoken session still asks the
+   * backend for `typed` (no options), it just answers by voice instead of a field. */
+  readonly spokenAnswering = signal(false);
+  readonly uiAnswerFormat = computed<UiAnswerFormat>(() => (this.spokenAnswering() ? 'spoken' : this.answerFormat()));
+  readonly listening = signal(false);
+  readonly spokenTranscript = signal<string | null>(null);
+  readonly speechUnsupported = signal(false);
   readonly singleContactMode = signal(false);
 
   /**
@@ -597,8 +641,10 @@ export class QuizComponent implements OnInit, OnDestroy {
     this.preferencesTouched.set(true);
   }
 
-  chooseAnswerFormat(format: AnswerFormat) {
-    this.answerFormat.set(format);
+  /** Spoken answering rides on a `typed` request — the server only ever sees typed/choice. */
+  chooseAnswerFormat(format: UiAnswerFormat) {
+    this.answerFormat.set(format === 'spoken' ? 'typed' : format);
+    this.spokenAnswering.set(format === 'spoken');
     this.preferencesTouched.set(true);
   }
 
@@ -643,6 +689,25 @@ export class QuizComponent implements OnInit, OnDestroy {
     this.reveal(contactId === question.contactId);
   }
 
+  /** A spoken guess is graded as a close match, not an exact one — see `namesMatch` (S-4.1.3). */
+  async toggleListening() {
+    if (this.listening()) return;
+    if (!this.speech.isSupported) {
+      this.speechUnsupported.set(true);
+      return;
+    }
+    this.listening.set(true);
+    this.spokenTranscript.set(null);
+    const transcript = await this.speech.listenOnce();
+    this.listening.set(false);
+    if (!transcript) return;
+    this.spokenTranscript.set(transcript);
+
+    const question = this.currentQuestion();
+    if (!question) return;
+    this.reveal(namesMatch(transcript, question.reveal.name));
+  }
+
   private reveal(correct: boolean) {
     this.lastCorrect.set(correct);
     // First reveal a user ever sees explains the ratings before asking for one (S-4.4.2).
@@ -685,6 +750,9 @@ export class QuizComponent implements OnInit, OnDestroy {
     this.typedAnswer.set('');
     this.selectedOptionId.set(null);
     this.explainerVisible.set(false);
+    this.listening.set(false);
+    this.spokenTranscript.set(null);
+    this.speechUnsupported.set(false);
   }
 
   // ── Rating explainer ────────────────────────────────────────────────────────
@@ -738,11 +806,6 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
     this.countdown.set(formatRemaining(new Date(next).getTime() - Date.now()));
   }
-}
-
-/** Typed answers are graded on the name, not on the typing — case and spacing don't count. */
-function normalise(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 function formatRemaining(ms: number): string {

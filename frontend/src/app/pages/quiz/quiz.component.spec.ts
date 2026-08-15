@@ -5,6 +5,7 @@ import { Observable, Subject, of } from 'rxjs';
 import { QuizComponent } from './quiz.component';
 import { DashboardMetrics, DashboardService } from '../../services/dashboard.service';
 import { SettingsService, UserSettings } from '../../services/settings.service';
+import { SpeechRecognitionService } from '../../services/speech-recognition.service';
 import {
   AnswerOutcome,
   QuizQuestion,
@@ -107,6 +108,8 @@ describe('QuizComponent', () => {
     settingsSource?: Observable<UserSettings>;
     queryParams?: Record<string, string>;
     answer?: () => Observable<AnswerOutcome>;
+    /** Defaults to a browser that supports speech recognition and hears nothing. */
+    speech?: { isSupported: boolean; listenOnce?: () => Promise<string | null> };
   } = {}): Promise<ComponentFixture<QuizComponent>> {
     startCalls = [];
     answerCalls = [];
@@ -121,6 +124,11 @@ describe('QuizComponent', () => {
         answerCalls.push(payload);
         return (options.answer ?? (() => of(outcome('2026-08-14T10:00:00.000Z'))))();
       },
+    };
+
+    const speechStub = {
+      isSupported: options.speech?.isSupported ?? true,
+      listenOnce: options.speech?.listenOnce ?? (() => Promise.resolve(null)),
     };
 
     await TestBed.configureTestingModule({
@@ -139,6 +147,7 @@ describe('QuizComponent', () => {
             },
           },
         },
+        { provide: SpeechRecognitionService, useValue: speechStub },
         {
           provide: ActivatedRoute,
           useValue: { snapshot: { queryParamMap: convertToParamMap(options.queryParams ?? {}) } },
@@ -327,6 +336,81 @@ describe('QuizComponent', () => {
       await render({ queryParams: { start: '1' }, session: session([choice]) });
 
       expect(all('name-option')).toHaveLength(4);
+    });
+  });
+
+  // ── Spoken answering (S-4.1.3) ────────────────────────────────────────────────
+
+  describe('answering by speaking', () => {
+    /** Chooses "Say the name" on the start screen and begins a session. */
+    async function startSpokenSession(): Promise<void> {
+      await click('answer-format-spoken');
+      await click('practice-all-btn');
+    }
+
+    it('offers "Say the name" as an answering choice', async () => {
+      await render();
+
+      expect(el('answer-format-spoken')).not.toBeNull();
+    });
+
+    it('does not offer it when the browser cannot listen for speech', async () => {
+      await render({ speech: { isSupported: false } });
+
+      expect(el('answer-format-spoken')).toBeNull();
+    });
+
+    it('starts a spoken session as a typed request under the hood', async () => {
+      await render();
+
+      await startSpokenSession();
+
+      expect(startCalls.at(-1)?.answerFormat).toBe('typed');
+    });
+
+    it('offers a listening control instead of a typed field or a choice list', async () => {
+      await render();
+
+      await startSpokenSession();
+
+      expect(el('speak-answer-btn')).not.toBeNull();
+      expect(el('answer-input')).toBeNull();
+      expect(el('name-options')).toBeNull();
+    });
+
+    it('shows what was heard as text once speech is recognized', async () => {
+      await render({ speech: { isSupported: true, listenOnce: () => Promise.resolve('Pria') } });
+
+      await startSpokenSession();
+      await click('speak-answer-btn');
+
+      expect(el('spoken-transcript')?.textContent).toContain('Pria');
+    });
+
+    it('accepts a close but imperfect spoken answer as correctly recalled', async () => {
+      await render({
+        session: session([question('Priya')]),
+        speech: { isSupported: true, listenOnce: () => Promise.resolve('Pria') },
+      });
+
+      await startSpokenSession();
+      await click('speak-answer-btn');
+
+      expect(el('reveal-name')?.textContent).toContain('Priya');
+      expect(el('answer-feedback')?.getAttribute('data-correct')).toBe('true');
+    });
+
+    it('marks an unrelated spoken answer as not recalled', async () => {
+      await render({
+        session: session([question('Priya')]),
+        speech: { isSupported: true, listenOnce: () => Promise.resolve('Somebody Else') },
+      });
+
+      await startSpokenSession();
+      await click('speak-answer-btn');
+
+      expect(el('reveal-name')?.textContent).toContain('Priya');
+      expect(el('answer-feedback')?.getAttribute('data-correct')).toBe('false');
     });
   });
 

@@ -409,6 +409,19 @@ export class FacefileDslAssert {
     await this.dsl.driver.expectAnswerInputVisible();
   }
 
+  /** A control for speaking the answer instead of a typed field or choice list (S-4.1.3). */
+  async seesSpeakingControl(): Promise<void> {
+    await this.dsl.driver.expectSpeakAnswerButtonVisible();
+  }
+
+  async seesNoSpokenAnsweringOption(): Promise<void> {
+    await this.dsl.driver.expectAnswerFormatOptionHidden('spoken');
+  }
+
+  async seesWhatWasHeard(textParam: string): Promise<void> {
+    await this.dsl.driver.expectSpokenTranscript(parseParam(textParam, 'text'));
+  }
+
   async seesRevealedName(nameParam: string): Promise<void> {
     const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
     await this.dsl.driver.expectRevealedName(name);

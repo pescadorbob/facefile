@@ -430,6 +430,38 @@ export class FacefileDsl {
     await this.driver.clickSubmitAnswer();
   }
 
+  /**
+   * Stubs what the (mocked) microphone will report the next time the user speaks an
+   * answer (S-4.1.3). Playwright has no real microphone, so this replaces the
+   * browser's speech recognition before the app loads — call it before the first
+   * navigation of the test.
+   */
+  async theMicrophoneWillHear(transcriptParam: string): Promise<void> {
+    await this.driver.mockSpeechRecognitionResult(parseParam(transcriptParam, 'transcript'));
+  }
+
+  /** A near-miss of an aliased name — close enough to count as recalled, not identical. */
+  async theMicrophoneWillHearACloseVariantOf(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.mockSpeechRecognitionResult(this.nearMissOf(name));
+  }
+
+  /** Simulates a browser with no speech recognition support at all (S-4.1.3). */
+  async hasNoVoiceInputSupport(): Promise<void> {
+    await this.driver.disableSpeechRecognitionSupport();
+  }
+
+  /** Taps the mic control and waits for the (mocked) spoken answer to be graded. */
+  async speaksTheAnswer(): Promise<void> {
+    await this.driver.clickSpeakAnswerButton();
+  }
+
+  /** Drops one character from the middle of a name — a small, deliberate mishearing. */
+  private nearMissOf(name: string): string {
+    const middle = Math.floor(name.length / 2);
+    return name.slice(0, middle) + name.slice(middle + 1);
+  }
+
   async picksTheNameOf(nameParam: string): Promise<void> {
     const name = this.ctx.alias(parseParam(nameParam, 'name'));
     await this.driver.clickNameOptionByText(name);

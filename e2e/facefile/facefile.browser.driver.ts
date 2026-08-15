@@ -852,6 +852,55 @@ export class FacefileBrowserDriver {
     await this.page.getByTestId('submit-answer-btn').click();
   }
 
+  /**
+   * Stubs the browser's speech recognition so it "hears" a scripted transcript the
+   * next time the app asks it to listen (S-4.1.3) — Playwright/Chromium has no real
+   * microphone, so the Web Speech API constructor itself is replaced before the app's
+   * first script runs. Must be called before the first navigation of the test.
+   */
+  async mockSpeechRecognitionResult(transcript: string): Promise<void> {
+    await this.page.addInitScript(heard => {
+      class FakeSpeechRecognition {
+        lang = '';
+        interimResults = false;
+        maxAlternatives = 1;
+        onresult: ((event: { results: { transcript: string }[][] }) => void) | null = null;
+        onerror: (() => void) | null = null;
+        onend: (() => void) | null = null;
+        start() {
+          setTimeout(() => this.onresult?.({ results: [[{ transcript: heard }]] }), 0);
+        }
+        stop() {}
+      }
+      (window as unknown as { SpeechRecognition: unknown }).SpeechRecognition = FakeSpeechRecognition;
+    }, transcript);
+  }
+
+  /** Simulates a browser with no speech recognition API at all (S-4.1.3). Must be
+   * called before the first navigation of the test. */
+  async disableSpeechRecognitionSupport(): Promise<void> {
+    await this.page.addInitScript(() => {
+      delete (window as unknown as { SpeechRecognition?: unknown }).SpeechRecognition;
+      delete (window as unknown as { webkitSpeechRecognition?: unknown }).webkitSpeechRecognition;
+    });
+  }
+
+  async clickSpeakAnswerButton(): Promise<void> {
+    await this.page.getByTestId('speak-answer-btn').click();
+  }
+
+  async expectSpeakAnswerButtonVisible(): Promise<void> {
+    await expect(this.page.getByTestId('speak-answer-btn')).toBeVisible();
+  }
+
+  async expectAnswerFormatOptionHidden(format: string): Promise<void> {
+    await expect(this.page.getByTestId(`answer-format-${format}`)).toHaveCount(0);
+  }
+
+  async expectSpokenTranscript(text: string): Promise<void> {
+    await expect(this.page.getByTestId('spoken-transcript')).toContainText(text);
+  }
+
   async clickNameOptionByText(name: string): Promise<void> {
     await this.page.getByTestId('name-option').filter({ hasText: name }).first().click();
   }
