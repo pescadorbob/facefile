@@ -41,4 +41,22 @@ test.describe('S-2.4.4 Dashboard Navigation Shortcuts — Admin, Meetings, Switc
     // THEN the session is cleared and the user is returned to the profile picker
     await confirmThat(facefile).seesProfilePicker();
   });
+
+  test('starting a quiz when nothing is due', async ({ facefile }) => {
+    // GIVEN the user is on the dashboard with no reviews currently due
+    await facefile.signsInAsTestUser();
+    await facefile.opensTheDashboard();
+    await facefile.registersFullyEncodedContact('name: Priya');
+    await facefile.completesReviewFor('name: Priya', 'rating: good');
+    await facefile.opensTheDashboard();
+    await confirmThat(facefile).seesCardsDueCount('count: 0');
+
+    // WHEN the user chooses to start a quiz
+    await facefile.startsReviewFromDueCount();
+
+    // THEN a quiz session begins using the user's contacts rather than being blocked
+    // by there being nothing due
+    await confirmThat(facefile).isOnQuizScreen();
+    await confirmThat(facefile).isOnQuestion('question: 1', 'of: 1');
+  });
 });

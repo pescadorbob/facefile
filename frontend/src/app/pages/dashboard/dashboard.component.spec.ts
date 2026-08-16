@@ -96,6 +96,14 @@ describe('DashboardComponent — due reviews and reminders', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/quiz'], { queryParams: { scope: 'due', start: 1 } });
   });
 
+  it('launches a practice-all session when the count is tapped with nothing due', async () => {
+    await render({ metrics: metrics({ cardsDue: 0 }) });
+
+    el('due-review-tile')!.click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/quiz'], { queryParams: { scope: 'all', start: 1 } });
+  });
+
   it('says the user is caught up when nothing is due', async () => {
     await render({ metrics: metrics({ cardsDue: 0 }) });
 

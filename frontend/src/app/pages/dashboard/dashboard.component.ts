@@ -241,7 +241,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   goToQuiz() { this.router.navigate(['/quiz']); }
-  goToDueQuiz() { this.router.navigate(['/quiz'], { queryParams: { scope: 'due', start: 1 } }); }
+
+  /**
+   * Nothing due doesn't mean nothing to quiz — with no due cards, "due" scope would
+   * hand the quiz page an empty session and dead-end on its empty state, so fall
+   * back to practicing everything instead (S-2.4.4).
+   */
+  goToDueQuiz() {
+    const scope = (this.metrics()?.cardsDue ?? 0) > 0 ? 'due' : 'all';
+    this.router.navigate(['/quiz'], { queryParams: { scope, start: 1 } });
+  }
   goToUpcoming() { this.router.navigate(['/reviews/upcoming']); }
   goToReminders() { this.router.navigate(['/settings/notifications']); }
 
