@@ -391,6 +391,89 @@ export class FacefileDsl {
     await this.driver.clickRemindersLink();
   }
 
+  // ── Edit person (S-2.6) ─────────────────────────────────────────────────────
+
+  async opensEditViewFor(nameParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    await this.driver.clickEditOnContactCard(name);
+  }
+
+  async editsContactsName(currentNameParam: string, newNameParam: string): Promise<void> {
+    const newName = this.ctx.alias(parseParam(newNameParam, 'name'));
+    await this.opensEditViewFor(currentNameParam);
+    await this.driver.fillEditNameField(newName);
+    await this.driver.clickSaveEditPersonForm();
+  }
+
+  /**
+   * Bypasses the "key: value" tag parser deliberately for the literal padding: parseParam
+   * trims before the DSL ever sees the value, which would defeat the one thing this
+   * scenario needs to prove (S-2.6.2's whitespace-trim rule). `literalPaddedName` is typed
+   * into the field exactly as given, spaces and all.
+   */
+  async savesNameWithSurroundingWhitespace(currentNameParam: string, literalPaddedName: string): Promise<void> {
+    await this.opensEditViewFor(currentNameParam);
+    await this.driver.fillEditNameField(literalPaddedName);
+    await this.driver.clickSaveEditPersonForm();
+  }
+
+  async replacesContactsPhoto(nameParam: string): Promise<void> {
+    await this.opensEditViewFor(nameParam);
+    await this.driver.choosesNewPhotoInEditForm();
+    await this.driver.clickSaveEditPersonForm();
+  }
+
+  async attemptsToReplacePhotoWithOversizedFile(nameParam: string): Promise<void> {
+    await this.opensEditViewFor(nameParam);
+    await this.driver.attemptsToChooseOversizedPhotoInEditForm();
+    await this.driver.clickSaveEditPersonForm();
+  }
+
+  async attemptsToReplacePhotoWithUnsupportedFile(nameParam: string): Promise<void> {
+    await this.opensEditViewFor(nameParam);
+    await this.driver.attemptsToChooseUnsupportedFileInEditForm();
+    await this.driver.clickSaveEditPersonForm();
+  }
+
+  async removesContactsPhoto(nameParam: string): Promise<void> {
+    await this.opensEditViewFor(nameParam);
+    await this.driver.clickRemovePhotoInEditForm();
+    await this.driver.clickSaveEditPersonForm();
+  }
+
+  async attemptsToClearContactsName(nameParam: string): Promise<void> {
+    await this.opensEditViewFor(nameParam);
+    await this.driver.fillEditNameField('');
+    await this.driver.clickSaveEditPersonForm();
+  }
+
+  async attemptsToClearNameAfterChoosingNewPhoto(nameParam: string): Promise<void> {
+    await this.opensEditViewFor(nameParam);
+    await this.driver.choosesNewPhotoInEditForm();
+    await this.driver.fillEditNameField('');
+    await this.driver.clickSaveEditPersonForm();
+  }
+
+  async opensEditViewAndChangesNameWithoutSaving(nameParam: string, attemptedNameParam: string): Promise<void> {
+    const attempted = this.ctx.alias(parseParam(attemptedNameParam, 'name'));
+    await this.opensEditViewFor(nameParam);
+    await this.driver.fillEditNameField(attempted);
+  }
+
+  async cancelsTheEditForm(): Promise<void> {
+    await this.driver.clickCancelEditPersonForm();
+  }
+
+  /** GIVEN-step palace+locus, created straight through the API, with a contact placed in it. */
+  async registersContactInANamedPalaceAndLocus(nameParam: string, palaceParam: string, locusParam: string): Promise<void> {
+    const name = this.ctx.alias(parseParam(nameParam, 'name'));
+    const palace = this.ctx.alias(parseParam(palaceParam, 'palace'));
+    const locus = parseParam(locusParam, 'locus');
+    const { palaceId, locusId } = await this.driver.createPalaceWithLocusViaApi(palace, locus);
+    this.driver.trackCreatedPalaceName(palace);
+    await this.driver.createContactInLocusViaApi(name, palaceId, locusId);
+  }
+
   // ── Quiz sessions ────────────────────────────────────────────────────────────
 
   async opensTheQuiz(): Promise<void> {

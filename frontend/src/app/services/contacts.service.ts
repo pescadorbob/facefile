@@ -19,6 +19,14 @@ export interface Contact {
   associationScene: string | null;
 }
 
+export interface UpdateContactPayload {
+  name: string;
+  /** A newly chosen file replaces the photo; omit both this and removePhoto to leave it alone. */
+  photo?: File | null;
+  /** Clears the saved photo back to the placeholder (S-2.6.4). Ignored if `photo` is also set. */
+  removePhoto?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContactsService {
   private http = inject(HttpClient);
@@ -36,5 +44,17 @@ export class ContactsService {
 
   list(): Observable<Contact[]> {
     return this.http.get<Contact[]>('/api/contacts');
+  }
+
+  get(id: string): Observable<Contact> {
+    return this.http.get<Contact>(`/api/contacts/${id}`);
+  }
+
+  update(id: string, payload: UpdateContactPayload): Observable<Contact> {
+    const form = new FormData();
+    form.append('name', payload.name);
+    if (payload.photo) form.append('photo', payload.photo);
+    else if (payload.removePhoto) form.append('removePhoto', 'true');
+    return this.http.patch<Contact>(`/api/contacts/${id}`, form);
   }
 }

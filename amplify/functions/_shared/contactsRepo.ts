@@ -35,6 +35,12 @@ export interface CreateContactInput {
   associationScene: string | null;
 }
 
+export interface UpdateContactInput {
+  name: string;
+  /** Omitted = leave the current photo alone; null = remove it; a string = replace it (S-2.6). */
+  photoPath?: string | null;
+}
+
 const nowIso = () => new Date().toISOString();
 
 // Port of the Contact/ReviewCard/QuizResult slices of contacts.js — Contact
@@ -89,6 +95,16 @@ export const contactsRepo = {
     ]);
 
     return { contact, reviewCard };
+  },
+
+  /** Merges into the existing item rather than replacing it wholesale, so an edit never
+   * touches the ReviewCard/QuizResult rows or the palace/locus fields it doesn't carry (S-2.6.6, S-2.6.7). */
+  async update(userId: string, id: string, data: UpdateContactInput): Promise<ContactRecord> {
+    const existing = await contactsRepo.findById(userId, id);
+    if (!existing) throw new Error(`Contact ${id} not found`);
+    const updated: ContactRecord = { ...existing, ...data, updatedAt: nowIso() };
+    await ddb.send(new PutCommand({ TableName: CONTACTS_TABLE(), Item: updated }));
+    return updated;
   },
 
   /** Mirrors the cascading `quizResult` → `reviewCard` → `contact` deletes in

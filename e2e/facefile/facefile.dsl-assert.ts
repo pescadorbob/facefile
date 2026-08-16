@@ -348,6 +348,64 @@ export class FacefileDslAssert {
     await this.dsl.driver.expectNextDueDateVisible();
   }
 
+  // ── Edit person (S-2.6) ─────────────────────────────────────────────────────
+
+  async isOnEditPersonScreen(): Promise<void> {
+    await this.dsl.driver.expectOnEditPersonPage();
+  }
+
+  async seesEditFormPrefilledWith(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    await this.dsl.driver.expectEditNameFieldValue(name);
+  }
+
+  async seesPhotoPreviewInEditForm(): Promise<void> {
+    await this.dsl.driver.expectEditPhotoPreviewVisible();
+  }
+
+  async seesPhotoPlaceholderInEditForm(): Promise<void> {
+    await this.dsl.driver.expectEditPhotoPlaceholderVisible();
+  }
+
+  async doesNotSeeRemovePhotoOption(): Promise<void> {
+    await this.dsl.driver.expectRemovePhotoActionNotVisible();
+  }
+
+  async seesNameRequiredErrorOnEditForm(): Promise<void> {
+    await this.dsl.driver.expectEditPersonNameRequiredErrorVisible();
+  }
+
+  async seesEditFormErrorContaining(textParam: string): Promise<void> {
+    const text = parseParam(textParam, 'text');
+    await this.dsl.driver.expectEditPersonFormErrorContains(text);
+  }
+
+  async seesNoPalaceOrLocusControlsInEditForm(): Promise<void> {
+    await this.dsl.driver.expectTextAbsentFromPage('Palace');
+    await this.dsl.driver.expectTextAbsentFromPage('Locus');
+  }
+
+  /** Reads the contact straight from the API — the durable record, not the screen. */
+  async seesContactNameUnchanged(nameParam: string): Promise<void> {
+    const name = this.dsl.ctx.alias(parseParam(nameParam, 'name'));
+    const contact = await this.dsl.driver.readContactViaApi(await this.dsl.driver.findContactIdByName(name));
+    expect(contact.name).toBe(name);
+  }
+
+  /** Unaliased: proves the exact (trimmed) characters were saved, by finding the contact
+   * under precisely that string — a lookup that fails outright if trimming didn't happen. */
+  async seesContactSavedWithExactName(nameParam: string): Promise<void> {
+    const name = parseParam(nameParam, 'name');
+    await this.dsl.driver.findContactIdByName(name);
+  }
+
+  /** Pass the same param for both when the edit under test doesn't touch the name (e.g. a photo edit). */
+  async seesContactPlacementUnchanged(originalNameParam: string, currentNameParam: string): Promise<void> {
+    const originalName = this.dsl.ctx.alias(parseParam(originalNameParam, 'name'));
+    const currentName = this.dsl.ctx.alias(parseParam(currentNameParam, 'name'));
+    await this.dsl.driver.expectContactPlacementUnchanged(originalName, currentName);
+  }
+
   // ── Quiz sessions ────────────────────────────────────────────────────────────
 
   async seesDueContactCount(countParam: string): Promise<void> {

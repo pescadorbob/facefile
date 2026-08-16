@@ -766,6 +766,90 @@ export class FacefileBrowserDriver {
     await expect(this.page.getByTestId('next-due-date')).toBeVisible();
   }
 
+  // ── Edit person (S-2.6) ─────────────────────────────────────────────────────
+
+  async clickEditOnContactCard(name: string): Promise<void> {
+    await this.page.getByRole('button', { name: `Edit ${name}`, exact: true }).click();
+  }
+
+  async expectOnEditPersonPage(): Promise<void> {
+    await this.page.waitForURL(/\/persons\/.+\/edit/);
+  }
+
+  async expectEditNameFieldValue(name: string): Promise<void> {
+    await expect(this.page.getByLabel('Name', { exact: true })).toHaveValue(name);
+  }
+
+  async fillEditNameField(name: string): Promise<void> {
+    await this.page.getByLabel('Name', { exact: true }).fill(name);
+  }
+
+  async expectEditPhotoPreviewVisible(): Promise<void> {
+    await expect(this.page.locator('main img')).toBeVisible();
+  }
+
+  async expectEditPhotoPlaceholderVisible(): Promise<void> {
+    await expect(this.page.getByTestId('photo-placeholder')).toBeVisible();
+  }
+
+  async choosesNewPhotoInEditForm(): Promise<void> {
+    await this.page.locator('input[type=file]').setInputFiles({
+      name: 'new-face.png', mimeType: 'image/png', buffer: FacefileBrowserDriver.PIXEL_PNG,
+    });
+  }
+
+  /** One byte over the 5 MB limit multipart.ts enforces (S-2.6.3). */
+  private static readonly OVERSIZED_FILE = Buffer.alloc(5 * 1024 * 1024 + 1);
+
+  async attemptsToChooseOversizedPhotoInEditForm(): Promise<void> {
+    await this.page.locator('input[type=file]').setInputFiles({
+      name: 'huge.png', mimeType: 'image/png', buffer: FacefileBrowserDriver.OVERSIZED_FILE,
+    });
+  }
+
+  async attemptsToChooseUnsupportedFileInEditForm(): Promise<void> {
+    await this.page.locator('input[type=file]').setInputFiles({
+      name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('not a photo'),
+    });
+  }
+
+  async clickRemovePhotoInEditForm(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Remove Photo' }).click();
+  }
+
+  async expectRemovePhotoActionNotVisible(): Promise<void> {
+    await expect(this.page.getByRole('button', { name: 'Remove Photo' })).toHaveCount(0);
+  }
+
+  /**
+   * Waits for the save to settle: the page navigates to the dashboard on success, or an
+   * inline error/required-field marker renders when it is rejected. Returning while the
+   * request is still in flight lets a following step read state that hasn't landed yet —
+   * same guard, and same reason, as clickSaveUserForm.
+   */
+  async clickSaveEditPersonForm(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Save changes' }).click();
+    await expect
+      .poll(async () =>
+        /\/dashboard/.test(this.page.url()) ||
+        (await this.page.getByTestId('edit-person-form-error').count()) > 0 ||
+        (await this.page.getByTestId('edit-person-name-error').count()) > 0,
+      )
+      .toBe(true);
+  }
+
+  async clickCancelEditPersonForm(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Cancel' }).click();
+  }
+
+  async expectEditPersonNameRequiredErrorVisible(): Promise<void> {
+    await expect(this.page.getByTestId('edit-person-name-error')).toBeVisible();
+  }
+
+  async expectEditPersonFormErrorContains(text: string): Promise<void> {
+    await expect(this.page.getByTestId('edit-person-form-error')).toContainText(new RegExp(text, 'i'));
+  }
+
   // ── Quiz sessions ────────────────────────────────────────────────────────────
 
   async navigateToQuiz(): Promise<void> {
@@ -792,11 +876,13 @@ export class FacefileBrowserDriver {
   /** page.request, so the contact lands on whichever profile the session cookie holds. */
   async createContactViaApi(
     name: string,
-    options: { withPhoto?: boolean; nameImage?: string; associationScene?: string } = {},
+    options: { withPhoto?: boolean; nameImage?: string; associationScene?: string; palaceId?: string; locusId?: string } = {},
   ): Promise<string> {
     const multipart: Record<string, string | { name: string; mimeType: string; buffer: Buffer }> = { name };
     if (options.nameImage) multipart.nameImage = options.nameImage;
     if (options.associationScene) multipart.associationScene = options.associationScene;
+    if (options.palaceId) multipart.palaceId = options.palaceId;
+    if (options.locusId) multipart.locusId = options.locusId;
     if (options.withPhoto) {
       multipart.photo = { name: 'face.png', mimeType: 'image/png', buffer: FacefileBrowserDriver.PIXEL_PNG };
     }
@@ -808,12 +894,50 @@ export class FacefileBrowserDriver {
     return body.id as string;
   }
 
+  /** Records the palace/locus a contact was placed in at creation time, so a later
+   * edit spec (S-2.6.7) can prove the pair is still exactly what it started as. */
+  private readonly contactPlacements = new Map<string, { palaceId: string; locusId: string }>();
+
+  async createContactInLocusViaApi(name: string, palaceId: string, locusId: string): Promise<void> {
+    await this.createContactViaApi(name, { palaceId, locusId });
+    this.contactPlacements.set(name, { palaceId, locusId });
+  }
+
+  /**
+   * Two names because an edit can rename the contact in between: `originalName` looks up
+   * the placement recorded at creation time, `currentName` (the same value, unless the
+   * spec just renamed it) locates the row to re-read now.
+   */
+  async expectContactPlacementUnchanged(originalName: string, currentName: string): Promise<void> {
+    const expected = this.contactPlacements.get(originalName);
+    if (!expected) throw new Error(`No recorded palace/locus placement for "${originalName}" — was it created via createContactInLocusViaApi?`);
+    const contact = await this.readContactViaApi(await this.findContactIdByName(currentName));
+    expect(contact.palaceId).toBe(expected.palaceId);
+    expect(contact.locusId).toBe(expected.locusId);
+  }
+
+  /** A palace with one named locus, created straight through the API (S-2.6.7's GIVEN). */
+  async createPalaceWithLocusViaApi(name: string, locusName: string): Promise<{ palaceId: string; locusId: string }> {
+    const res = await this.page.request.post(`${BACKEND_URL}/palaces`, { data: { name, loci: [locusName] } });
+    const body = await res.json();
+    if (!res.ok() || !body?.id || !body?.loci?.[0]?.id) {
+      throw new Error(`Could not create the palace "${name}": ${res.status()} ${JSON.stringify(body)}`);
+    }
+    return { palaceId: body.id as string, locusId: body.loci[0].id as string };
+  }
+
   async findContactIdByName(name: string): Promise<string> {
     const res = await this.page.request.get(`${BACKEND_URL}/contacts`);
     const contacts = (await res.json()) as { id: string; name: string }[];
     const match = contacts.find(contact => contact.name === name);
     if (!match) throw new Error(`No contact named "${name}" on the active profile`);
     return match.id;
+  }
+
+  async readContactViaApi(id: string): Promise<{ id: string; name: string; photoPath: string | null; palaceId: string | null; locusId: string | null }> {
+    const res = await this.page.request.get(`${BACKEND_URL}/contacts/${id}`);
+    if (!res.ok()) throw new Error(`Could not read contact ${id}: ${res.status()}`);
+    return await res.json();
   }
 
   /**

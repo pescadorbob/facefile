@@ -158,7 +158,9 @@ const METRICS_REFRESH_MS = 15_000;
           } @else {
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
               @for (contact of contacts(); track contact.id) {
-                <div class="border flex flex-col items-center gap-2 px-3 py-4"
+                <button (click)="goToEditPerson(contact.id)" data-testid="contact-card"
+                  [attr.aria-label]="'Edit ' + contact.name"
+                  class="border flex flex-col items-center gap-2 px-3 py-4 text-left"
                   style="background:var(--card);border-color:var(--border)">
                   @if (contact.photoPath) {
                     <img [src]="contact.photoPath" [alt]="contact.name"
@@ -170,7 +172,7 @@ const METRICS_REFRESH_MS = 15_000;
                     </span>
                   }
                   <span class="text-center" style="font-family:'Lora',serif;font-size:13px;color:var(--fg)">{{ contact.name }}</span>
-                </div>
+                </button>
               }
               <button (click)="goToAddPerson()"
                 class="border flex flex-col items-center justify-center gap-2 px-3 py-4"
@@ -262,6 +264,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   goToTutorial() { this.router.navigate(['/tutorial']); }
   goToPalaces() { this.router.navigate(['/palaces']); }
   goToAddPerson() { this.router.navigate(['/persons/new']); }
+  goToEditPerson(id: string) { this.router.navigate(['/persons', id, 'edit']); }
   goToAdmin() { this.router.navigate(['/admin/users']); }
   goToMeetings() { this.router.navigate(['/meetings']); }
 

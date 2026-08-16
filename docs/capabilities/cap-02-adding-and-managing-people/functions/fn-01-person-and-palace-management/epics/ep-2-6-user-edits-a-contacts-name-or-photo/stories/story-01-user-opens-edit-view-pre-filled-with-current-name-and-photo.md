@@ -4,17 +4,17 @@
 
 ## Acceptance Criteria
 
-- [ ] Every contact offers an "Edit" action from wherever the contact is displayed (contact detail, names-and-faces inventory)
-- [ ] Opening the edit view shows First Name, Last Name, and Nickname fields pre-filled with the contact's current values
+- [ ] Every contact offers an "Edit" action from wherever the contact is displayed (today, the names-and-faces inventory)
+- [ ] Opening the edit view shows the Name field pre-filled with the contact's current name
 - [ ] Opening the edit view shows the contact's current photo, or the placeholder silhouette if no photo is saved
 - [ ] The edit view can be closed or cancelled without changing the contact
 
 ## Scenarios
 
 Scenario: Edit view opens pre-filled
-GIVEN a contact exists with First Name "Priya", Last Name "Chandra", Nickname "Pri", and a saved photo
+GIVEN a contact exists with name "Priya Chandra" and a saved photo
 WHEN the user opens the edit view for that contact
-THEN the First Name field shows "Priya", the Last Name field shows "Chandra", the Nickname field shows "Pri", and the saved photo is displayed
+THEN the Name field shows "Priya Chandra" and the saved photo is displayed
 
 Scenario: Edit view opens for a contact with no photo
 GIVEN a contact exists with no saved photo
@@ -22,6 +22,6 @@ WHEN the user opens the edit view for that contact
 THEN the placeholder silhouette is displayed in place of a photo
 
 Scenario: Cancelling the edit view discards changes
-GIVEN the user has opened the edit view and changed the First Name field
+GIVEN the user has opened the edit view and changed the Name field
 WHEN the user cancels instead of saving
 THEN the contact's stored name is unchanged

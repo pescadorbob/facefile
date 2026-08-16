@@ -26,6 +26,12 @@ export const routes: Routes = [
       import('./pages/add-person/add-person.component').then((m) => m.AddPersonComponent),
   },
   {
+    path: 'persons/:id/edit',
+    canActivate: [profileGuard],
+    loadComponent: () =>
+      import('./pages/edit-person/edit-person.component').then((m) => m.EditPersonComponent),
+  },
+  {
     path: 'quiz',
     canActivate: [profileGuard],
     loadComponent: () =>

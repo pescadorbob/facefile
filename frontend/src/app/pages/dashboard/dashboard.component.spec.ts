@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { DashboardComponent } from './dashboard.component';
-import { ContactsService } from '../../services/contacts.service';
+import { Contact, ContactsService } from '../../services/contacts.service';
 import { DashboardMetrics, DashboardService } from '../../services/dashboard.service';
 import { Notification, NotificationsService } from '../../services/notifications.service';
 import { SessionService } from '../../services/session.service';
@@ -32,7 +32,7 @@ describe('DashboardComponent — due reviews and reminders', () => {
   let metricsReads: number;
   let fixture: ComponentFixture<DashboardComponent>;
 
-  async function render(options: { metrics?: DashboardMetrics; notifications?: Notification[] } = {}): Promise<void> {
+  async function render(options: { metrics?: DashboardMetrics; notifications?: Notification[]; contacts?: Contact[] } = {}): Promise<void> {
     readCalls = [];
     metricsReads = 0;
 
@@ -49,7 +49,7 @@ describe('DashboardComponent — due reviews and reminders', () => {
             },
           },
         },
-        { provide: ContactsService, useValue: { list: () => of([]) } },
+        { provide: ContactsService, useValue: { list: () => of(options.contacts ?? []) } },
         {
           provide: NotificationsService,
           useValue: {
@@ -156,6 +156,14 @@ describe('DashboardComponent — due reviews and reminders', () => {
     await render({ notifications: [reminder({ readAt: '2026-08-13T10:00:00.000Z' })] });
 
     expect(el('review-reminder')).toBeNull();
+  });
+
+  it('navigates to the edit view when a contact card is tapped', async () => {
+    await render({ contacts: [{ id: 'c1', name: 'Priya Chandra', photoPath: null, nameImage: null, associationScene: null }] });
+
+    ((fixture.nativeElement as HTMLElement).querySelector('[data-testid="contact-card"]') as HTMLElement).click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/persons', 'c1', 'edit']);
   });
 
   it('offers a way through to the upcoming reviews and reminder settings', async () => {
