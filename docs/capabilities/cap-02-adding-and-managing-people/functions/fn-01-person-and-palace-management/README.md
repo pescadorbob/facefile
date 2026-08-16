@@ -10,3 +10,4 @@ Add people to palaces, place them in loci, and manage palace inventories.
 - [E-2.2: User Associates Person with Palace Location](./epics/ep-2-2-user-associates-person-with-palace-location/README.md)
 - [E-2.3: User Manages Multiple Palaces](./epics/ep-2-3-user-manages-multiple-palaces/README.md)
 - [E-2.4: Dashboard as Command Centre](./epics/ep-2-4-dashboard-as-command-centre/README.md)
+- [E-2.6: User Edits a Contact's Name or Photo](./epics/ep-2-6-user-edits-a-contacts-name-or-photo/README.md)
