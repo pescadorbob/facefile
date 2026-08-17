@@ -1,13 +1,9 @@
 import { confirmThat, test } from '../../fixtures/facefile';
 
-/**
- * These run against the seeded profile rather than a throwaway one: the add-person
- * wizard's placement step needs the seeded starter palaces, which a fresh account has
- * none of (see FacefileDsl.signsInAsTestUser).
- */
 test.describe('S-4.8.1 User Is Prompted to Quiz After Saving Contact', () => {
   test('saving a contact leads straight to a quiz prompt', async ({ facefile }) => {
     // GIVEN a user completing the add-person wizard
+    await facefile.signsInAsTestUserWithAPalace();
     await facefile.opensGuidedWizard();
 
     // WHEN they save the new contact
@@ -20,6 +16,7 @@ test.describe('S-4.8.1 User Is Prompted to Quiz After Saving Contact', () => {
 
   test('the prompt holds a single question about the contact just added', async ({ facefile }) => {
     // GIVEN a user who has just saved a contact
+    await facefile.signsInAsTestUserWithAPalace();
     await facefile.opensGuidedWizard();
     await facefile.completesAllFiveSteps('name: Marcus');
 
@@ -34,6 +31,7 @@ test.describe('S-4.8.1 User Is Prompted to Quiz After Saving Contact', () => {
 
   test('the prompt uses the same reveal and rating flow as any session', async ({ facefile }) => {
     // GIVEN a user on the post-add quiz prompt
+    await facefile.signsInAsTestUserWithAPalace();
     await facefile.opensGuidedWizard();
     await facefile.completesAllFiveSteps('name: Marcus');
     await confirmThat(facefile).landedOnQuizPage();
@@ -48,6 +46,7 @@ test.describe('S-4.8.1 User Is Prompted to Quiz After Saving Contact', () => {
 
   test('completing the prompt updates the contact’s review schedule', async ({ facefile }) => {
     // GIVEN a user on the post-add quiz prompt
+    await facefile.signsInAsTestUserWithAPalace();
     await facefile.opensGuidedWizard();
     await facefile.completesAllFiveSteps('name: Marcus');
     await confirmThat(facefile).landedOnQuizPage();

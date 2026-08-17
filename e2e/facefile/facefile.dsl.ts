@@ -189,17 +189,27 @@ export class FacefileDsl {
 
   /**
    * GIVEN-step sign-in for any spec that just needs *a* signed-in user: creates its own
-   * isolated account (aliased name/email, deactivated in fixture teardown) and signs in as
-   * it, so the spec doesn't depend on the seeded profile being present and active.
-   *
-   * Specs that need the seeded starter palaces (the add-person wizard) must NOT use this —
-   * a fresh account has no palaces. Those keep the seeded profile the driver signs in as.
+   * isolated account (aliased name/email) and signs in as it — functional isolation, so
+   * the spec's data lives in an account nothing else touches and never needs cleanup.
    */
   async signsInAsTestUser(nameParam = 'name: Test User', emailParam = 'email: test-user@example.com'): Promise<void> {
     const name = this.ctx.alias(parseParam(nameParam, 'name'));
     const email = this.ctx.aliasEmail(parseParam(emailParam, 'email'));
     await this.driver.signInAsNewUserViaApi(name, email);
     this.driver.trackCreatedUserEmail(email);
+  }
+
+  /**
+   * Same as signsInAsTestUser(), plus one starter palace + locus so the add-person
+   * wizard's placement step (S-2.5.1) has somewhere to place a person. Named to match
+   * what completesStep2()/clickFirstSeedPalace() already click through, so nothing
+   * downstream needs to know whether it's talking to the seeded profile or a fresh one —
+   * it isn't the seeded profile, it just happens to share a palace/locus name, which is
+   * harmless since this account is isolated from every other test regardless.
+   */
+  async signsInAsTestUserWithAPalace(): Promise<void> {
+    await this.signsInAsTestUser();
+    await this.driver.createPalaceWithLocusViaApi('Childhood Home', 'Front doorstep');
   }
 
   async registersActiveUser(nameParam: string, emailParam: string): Promise<void> {

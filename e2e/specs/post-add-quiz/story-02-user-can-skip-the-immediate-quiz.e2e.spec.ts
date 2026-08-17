@@ -3,6 +3,7 @@ import { confirmThat, test } from '../../fixtures/facefile';
 test.describe('S-4.8.2 User Can Skip the Immediate Quiz', () => {
   test('a skip option is clearly offered on the prompt', async ({ facefile }) => {
     // GIVEN a user who has just saved a new contact
+    await facefile.signsInAsTestUserWithAPalace();
     await facefile.opensGuidedWizard();
     await facefile.completesAllFiveSteps('name: Marcus');
 
@@ -15,6 +16,7 @@ test.describe('S-4.8.2 User Can Skip the Immediate Quiz', () => {
 
   test('skipping returns the user to where they were before adding', async ({ facefile }) => {
     // GIVEN a user on the post-add quiz prompt
+    await facefile.signsInAsTestUserWithAPalace();
     await facefile.opensGuidedWizard();
     await facefile.completesAllFiveSteps('name: Marcus');
     await confirmThat(facefile).landedOnQuizPage();
@@ -29,6 +31,7 @@ test.describe('S-4.8.2 User Can Skip the Immediate Quiz', () => {
 
   test('skipping leaves the contact in the review queue', async ({ facefile }) => {
     // GIVEN a user who has just added a contact
+    await facefile.signsInAsTestUserWithAPalace();
     await facefile.opensGuidedWizard();
     await facefile.completesAllFiveSteps('name: Marcus');
     await confirmThat(facefile).landedOnQuizPage();
@@ -45,6 +48,7 @@ test.describe('S-4.8.2 User Can Skip the Immediate Quiz', () => {
 
   test('a skipped contact comes round again in a due-review session', async ({ facefile }) => {
     // GIVEN a user who skipped the prompt for a newly added contact
+    await facefile.signsInAsTestUserWithAPalace();
     await facefile.opensGuidedWizard();
     await facefile.completesAllFiveSteps('name: Marcus');
     await confirmThat(facefile).landedOnQuizPage();
