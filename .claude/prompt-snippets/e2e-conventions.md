@@ -107,7 +107,7 @@ while ((Get-Date) -lt $end) {
 Rules:
 - **Never wait on command output** to determine if a server is ready — on Windows, `ng serve` writes to a separate console window.
 - **Always poll the port** with `Invoke-WebRequest` until you get a 200.
-- Each test must create the data it needs. Do **not** depend on a pre-seeded DB beyond the one default user/palace set `npm run seed` creates.
+- Each test creates its own user (functional isolation — see below) and then whatever data it needs inside that account. Do **not** depend on a pre-seeded DB beyond the one default user/palace set `npm run seed` creates — that seeded profile is only for the narrow set of specs that specifically need it.
 
 ---
 
@@ -143,26 +143,46 @@ spec —uses—> DSL (FacefileDsl, FacefileDslAssert) —uses—> Driver (Facefi
 ### Layer 3 — Driver (`e2e/facefile/facefile.browser.driver.ts`)
 
 - The **only** place that knows about Playwright (`Page`, `Locator`, `APIRequestContext`), CSS/role selectors, the auth-interceptor's token-refresh dance, and file-upload paths.
-- Owns: navigating to routes, locating elements by accessible role/name (prefer `getByRole`/`getByLabel` over CSS), filling forms, uploading photos, reading network responses, and seeding/cleaning data through the backend API.
+- Owns: navigating to routes, locating elements by accessible role/name (prefer `getByRole`/`getByLabel` over CSS), filling forms, uploading photos, reading network responses, and seeding data through the backend API.
 - OK: anything Playwright/HTTP/file-system related, retries/polling, `expect(locator).toBeVisible()`.
 - **Not OK**: business vocabulary (`SM-2`, `palace`, `locus`) leaking into method names — driver methods describe *mechanisms* (`clickPrimaryButton`, `getRowsInTable('contacts')`), not *intent*. Intent belongs in the DSL.
 - **Not OK**: throwing bare strings; use a `requirePage()` / `requireSignedInUser()` pattern so misuse fails with a clear message.
-- **Not OK**: talking to DynamoDB directly (AWS SDK Document Client, table scans/gets/puts) for setup or cleanup. All seeding and teardown goes through the UI or the REST API — see "Never hit DynamoDB directly" below.
-- Cleanup is mandatory and must remain idempotent — every test artifact (DB row, uploaded file, signed-in session) must be released in fixture teardown. **Deactivate** user accounts rather than deleting them. Never touch the account named `"Brent Fisher"`.
+- **Not OK**: talking to DynamoDB directly (AWS SDK Document Client, table scans/gets/puts) for setup. All seeding goes through the UI or the REST API — see "Never hit DynamoDB directly" below.
+- No cleanup step is required. Every test creates its own fresh user via functional isolation (see below), so its data lives in that user's own partition and never needs to be found again, let alone deleted. Never touch the account named `"Brent Fisher"` regardless.
 
 ### Layer 4 — Fixtures (`e2e/fixtures/`)
 
-- Wire the layers together for Playwright. `facefile.ts` extends `@playwright/test` with test-scoped fixtures: `driver` (constructs the driver, calls cleanup after each test, `auto: true`), `facefile` (wraps the driver in `FacefileDsl`).
+- Wire the layers together for Playwright. `facefile.ts` extends `@playwright/test` with test-scoped fixtures: `driver` (constructs the driver, `auto: true`), `facefile` (wraps the driver in `FacefileDsl`).
 - Specs import `test` and any skip helpers from `./fixtures` — **never** from `@playwright/test` directly — so the layering and any availability skips stay consistent.
 - Don't add business logic here. Fixtures only do construction, lifecycle, and re-exports.
 
 ---
 
+## Functional isolation
+
+This is the **primary** isolation mechanism for FaceFile's e2e specs, and it comes before temporal isolation both in this doc and in what a spec should do first.
+
+Every table in DynamoDB is partitioned by `userId` (see CLAUDE.md's Data Model section), and `resolveUserId()` genuinely honors whichever user the session cookie names — there's no verified login, but there *is* real per-user data scoping (see CLAUDE.md's Authorization Status section). That makes the user/profile the natural functional isolation boundary for this app, the same way "a hospital" or "a book" is the boundary in other systems: a self-contained unit that everything a test does can happen inside of, invisible to every other test.
+
+**The rule:** at the start of every e2e test, create a brand-new user and sign in as it — `await facefile.signsInAsTestUser()`. Everything that test does from that point on (contacts, palaces, review cards, quiz results, tutorial progress, settings, notifications) lives inside that one account and is invisible to every other test, because it's a different partition key. No other test can see it, race with it, or be broken by it — whether the other test runs before, after, or *at the same time*.
+
+**Then leave it be.** Don't clean the account up at the end of the test, don't deactivate it, don't delete its data. There's nothing to protect it from — no other test shares it — so there's nothing tidying up would buy you, and tidying up is exactly the intrusive, slow pattern isolation is meant to replace. Test accounts are cheap and the sandbox is disposable; let them accumulate and reseed/redeploy when you want a clean environment, not between tests.
+
+**The one narrow exception:** a handful of specs (the add-person wizard, and anything else that needs the seeded starter palaces) must exercise the one seeded default profile instead of a fresh account, because a fresh account has no palaces of its own. Those specs don't get functional isolation from the user boundary — they share it with every other spec that also needs the seeded profile — so they lean on temporal isolation (below) for their contact/palace names instead. This is the exception, not the pattern to copy for new specs.
+
+```ts
+// Every new spec starts like this:
+test('...', async ({ facefile }) => {
+  await facefile.signsInAsTestUser();
+  // ...everything else happens inside this account
+});
+```
+
 ## Temporal isolation
 
-When multiple test runs execute against the same database (sequential runs, parallel workers, or a shared dev environment), human-readable names can collide. Two test runs both creating a contact named "Tom" may find each other's rows and produce false positives or flaky failures.
+Functional isolation handles data *inside* a test's own account. But the account itself has to be created somewhere shared — the `Users` table isn't partitioned by anything, so two test runs creating "a test user" at close to the same moment could collide on name or email. Temporal isolation is what keeps that one shared step collision-free, by having the DSL silently append a short, run-unique suffix to any value used as a discriminator.
 
-**Temporal isolation** solves this by having the DSL silently append a short, run-unique suffix to any value that is used as a discriminator in the UI.
+Combine the two: functional isolation scopes a test to an account it creates for itself; temporal isolation makes sure that account (and, for the seeded-profile exception above, the values created within it) is unique even across repeated runs.
 
 ### How it works
 
@@ -227,7 +247,7 @@ await confirmThat(facefile).showsContactInList('name: Tom');
 | Display names (contacts, users) | Enum values (`status: active`) |
 | Usernames, handles | Counts (`count: 3`) |
 | Any field searched by text | IDs looked up by another mechanism |
-| Data that must survive across setup + assertion | Emails managed by explicit cleanup |
+| Data that must survive across setup + assertion | A literal boundary value the test is deliberately checking (e.g. a name at the minimum length) |
 
 ### String interpolation
 
@@ -245,20 +265,19 @@ const message = this.ctx.interpolate(parseParam(messageParam, 'message'));
 - **Assertions mirror their corresponding setup verbs** — if `addsContact('name: Tom')` aliases `Tom`, then `showsContactInList('name: Tom')` must alias `Tom` with the same context.
 - `DslContext` is created once per test (in the fixture). Never share a context across tests.
 - Do not alias values that are not discriminators in the UI (statuses, counts, booleans).
-- Each spec **creates its own data** through the API or UI, and **deactivates it** in teardown (fixture `finally` block). Never delete user accounts — mark them as `deactivated` instead, so real accounts (e.g. `"Brent Fisher"`) are never accidentally removed.
-- **Never delete or deactivate the account named `"Brent Fisher"`** — all TEARDOWN cleanup methods guard against this name. The driver's `deleteUserByEmail`, `deactivateUserByEmail`, and `deactivateAllNonSeedUsers` skip any user whose `name` is `"Brent Fisher"`. Note: `deleteAllNonSeedUsers` is a TEST SETUP precondition (not teardown) so it does NOT have this guard — it intentionally deletes all non-seed users including persistent test accounts to achieve a reliably empty state.
-- **Cleanup belongs at the end** — put teardown in the fixture `finally` block. Do not add `beforeEach` or `afterEach` cleanup blocks in spec files; with temporal isolation (aliased names/emails), there are no pre-test leftovers to clean up, and the fixture `finally` runs unconditionally after each test.
-- **Always alias user names and emails** — use `ctx.alias(name)` for names and `aliasEmail(email)` (alias the local part before `@`) for emails in every DSL method that creates or references a user. This ensures each test run produces unique, non-conflicting accounts and deactivation-based teardown never causes 409 conflicts on subsequent runs.
-- Do not share users across specs. All DSL methods that create users (`registersUser`, `userExistsWith`, `userExistsWithEmail`, `submitsNewUserWith`) alias their inputs automatically — specs always write plain names/emails.
-- The backend currently runs in single-user mode (`DEFAULT_USER_ID` in `amplify/backend.ts`, a fixed seeded UUID — see `amplify/seed.ts`). Until that changes, e2e specs must reset the relevant per-user data (Contacts, ReviewCards, QuizResults, TutorialProgress, etc.) in teardown rather than rely on user isolation — via an admin API endpoint (see below), never by touching DynamoDB directly.
+- Each spec **creates its own data** through the API or UI. Nothing needs to be torn down afterward — see Functional isolation above.
+- **Never delete or deactivate the account named `"Brent Fisher"`.** This is the one standing exception to "no cleanup needed": no spec should ever touch this account, full stop, so any driver method that could plausibly reach a real account still guards against this name.
+- Do not add `beforeEach` or `afterEach` cleanup blocks in spec files. With functional isolation (a fresh account per test) plus temporal isolation (aliased names/emails on that account's own creation), there is nothing left over from a previous run for a later test to collide with.
+- **Always alias user names and emails** — use `ctx.alias(name)` for names and `aliasEmail(email)` (alias the local part before `@`) for emails in every DSL method that creates or references a user. This is what keeps concurrent/parallel test runs from colliding while creating their own accounts on the shared `Users` table.
+- Do not share users across specs. All DSL methods that create users (`registersUser`, `signsInAsTestUser`, `userExistsWith`, `userExistsWithEmail`, `submitsNewUserWith`) alias their inputs automatically — specs always write plain names/emails.
 
 ---
 
 ## Never hit DynamoDB directly
 
-- E2E specs, the DSL, and the driver must **never** read or write DynamoDB directly — no AWS SDK Document Client calls, no `aws dynamodb` CLI, no scans/gets/puts against `Contacts`, `ReviewCards`, `QuizResults`, `TutorialProgress`, `Users`, `Palaces`, `UserSettings`, or `Notifications`. Every setup, seed, and teardown step goes through the **UI** (Playwright) or the **REST API** (`APIRequestContext`), exactly like a real client.
-- This matters especially for teardown in single-user mode (see above): resetting a user's data between specs is tempting to do with a direct table wipe, but that bypasses the same validation and side effects (e.g. `POST /contacts` also creating a `ReviewCard`) that production traffic goes through, and it will silently drift out of sync with the API as the schema evolves.
-- **If the operation you need has no existing route** (e.g. "delete all contacts for the seeded user", "force a card's `nextReviewAt` into the past", "read a raw `QuizResult` row for an assertion"), **add an admin API endpoint** for it rather than reaching into the table:
+- E2E specs, the DSL, and the driver must **never** read or write DynamoDB directly — no AWS SDK Document Client calls, no `aws dynamodb` CLI, no scans/gets/puts against `Contacts`, `ReviewCards`, `QuizResults`, `TutorialProgress`, `Users`, `Palaces`, `UserSettings`, or `Notifications`. Every setup and seed step goes through the **UI** (Playwright) or the **REST API** (`APIRequestContext`), exactly like a real client.
+- This matters even though functional isolation means there's no teardown to write anymore: a direct table write for *setup* (e.g. planting a contact) would still bypass the same validation and side effects (e.g. `POST /contacts` also creating a `ReviewCard`) that production traffic goes through, and it would silently drift out of sync with the API as the schema evolves.
+- **If the operation you need has no existing route** (e.g. "force a card's `nextReviewAt` into the past", "read a raw `QuizResult` row for an assertion"), **add an admin API endpoint** for it rather than reaching into the table:
   - Mount it as a new sub-path on the existing `admin/users` Lambda (`amplify/functions/adminUsers/`) if it's user-management-shaped, or add a new resource in `amplify/backend.ts` (`mountLambda`) following the handler/service/repository split in `.claude/skills/ports-and-adapters.md`.
   - Have the driver call the new admin endpoint via `APIRequestContext`, the same way it calls every other route.
   - Treat the new endpoint as real product surface: it ships in `amplify/backend.ts` like any other route, and should be reviewed with the same care (it's still unauthenticated, per the Authorization Status section in `CLAUDE.md`, so keep destructive admin routes scoped to what tests actually need).

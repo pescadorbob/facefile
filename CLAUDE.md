@@ -76,11 +76,11 @@ Run `npm run sync-outputs` again any time `amplify_outputs.json` changes (e.g. a
 Practical consequences:
 
 - There is no Cognito/Amplify Auth category in `amplify/backend.ts` — this was a deliberate choice during the Amplify migration, not an oversight. Fixing authorization is a deliberate future story, not something to bundle into other work.
-- All contacts, quiz cards, quiz results, and tutorial progress belong to the one seeded default user (`amplify/seed.ts`) regardless of who is "logged in" via the profile picker.
-- The `POST /session`, `GET /session/me` login flow (`functions/session/handler.ts`) is real (it reads/writes a signed, `SameSite=None; Secure` cookie) but doesn't gate anything — every other route resolves the same way whether or not that cookie is present.
+- Data (contacts, quiz cards, quiz results, tutorial progress, palaces, settings, notifications) *is* correctly partitioned per `resolveUserId()`'s result — the gap isn't data isolation, it's access control. `POST /session` hands out a valid signed cookie for any `userId` it's given, with zero proof the caller actually is that user. "No working authorization" means anyone can *become* any user, not that all data secretly funnels into one bucket.
+- The `POST /session`, `GET /session/me` login flow (`functions/session/handler.ts`) is real (it reads/writes a signed, `SameSite=None; Secure` cookie) and does correctly scope every other route to whichever user that cookie names — it just never checks that the caller is entitled to claim that identity in the first place.
 - Do **not** attempt to fix this as a side-effect of other work.
 
-When writing e2e tests, **do not attempt to log in as different users to get data isolation.** Use temporal isolation (aliased names via `DslContext`) and explicit teardown instead — see `.claude/prompt-snippets/e2e-conventions.md`.
+Because the cookie genuinely does scope data per user, **e2e tests should sign in as a fresh user at the start of every test** — this is functional isolation (the user/profile is the natural isolation boundary here), and it's the primary isolation mechanism for e2e specs. See `.claude/prompt-snippets/e2e-conventions.md`.
 
 ---
 

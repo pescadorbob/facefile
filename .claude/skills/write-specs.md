@@ -12,7 +12,8 @@ When asked to write or generate executable specifications from story acceptance 
 - Create a Domain Specific Language (DSL) layer that turns the plain business language (the "HOW") into complete test fixtures for each example.
 - Write the DSL in the native language of the application (TypeScript for this project) so test fixtures can be executed as part of the build process.
 - Alternatively consider Gherkin / Cucumber if the team prefers a separate business-readable layer.
-- Create temporal isolation in the DSL using aliases to prevent test constraint conflicts between scenarios.
+- Isolate each spec functionally first: have it create its own fresh user/profile at the start (the natural isolation boundary in this app) and do everything else inside that account. Don't tear it down afterward — there's nothing to protect it from once nothing else shares it.
+- Layer temporal isolation on top, in the DSL, using aliases — this covers the one thing functional isolation can't scope on its own: the shared `Users` table itself, where two runs creating "a test user" at the same moment need unique names/emails.
 - Relentlessly focus DSL language on the end user and the domain — never on implementation details.
 
 ## Protocol driver
